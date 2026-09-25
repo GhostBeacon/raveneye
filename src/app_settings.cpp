@@ -112,7 +112,7 @@ static void activate(int r) {
             }
             break;
         case R_SYSTEM:
-            ui::message("System", "RavenEye " FW_VERSION "\nRAM frei: " + String(ESP.getFreeHeap() / 1024) +
+            ui::message("System", "Rabenauge " FW_VERSION "\nRAM frei: " + String(ESP.getFreeHeap() / 1024) +
                                       " KB\nkleinster Stand: " + String(ESP.getMinFreeHeap() / 1024) +
                                       " KB\ngrößter Block: " + String(ESP.getMaxAllocHeap() / 1024) + " KB\nLaufzeit: " +
                                       String(millis() / 60000) + " min\nAkku: " + String(M5Cardputer.Power.getBatteryLevel()) + " %");

@@ -195,9 +195,13 @@ static void showDetail(const Monitor& m) {
         // Verlauf: ein Balken pro Messung, neueste rechts
         int n = m.beats.size();
         if (n) {
-            int bw = max(2, (c.width() - 8) / 50);
-            int x = c.width() - 4 - n * bw;
-            for (int i = 0; i < n; i++) c.fillRect(x + i * bw, y, bw - 1, 14, statusColor(m.beats[i]));
+            // Kuma 1 liefert 50, Kuma 2 100 Messungen: Breite an die Anzahl anpassen,
+            // reicht der Platz nicht, nur die neuesten zeigen
+            int bw = max(2, (c.width() - 8) / n);
+            int shown = min(n, (c.width() - 8) / bw);
+            int x = c.width() - 4 - shown * bw;
+            for (int i = 0; i < shown; i++) c.fillRect(x + i * bw, y, max(1, bw - 1), 14, statusColor(m.beats[n - shown + i]));
+            n = shown;
             c.drawFastHLine(4, y + 15, c.width() - 8, ui::C_DIM);
             y += 18;
             c.setTextColor(ui::C_HINT);

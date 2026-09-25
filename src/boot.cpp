@@ -1,4 +1,4 @@
-// Startbild: Stoerstreifen, dann "RAVENEYE" mit RGB-Versatz (Glitch), Fortschrittsbalken und
+// Startbild: Stoerstreifen, dann "RABENAUGE" mit RGB-Versatz (Glitch), Fortschrittsbalken und
 // dem echten Verbindungsstand darunter. Laeuft ~2,6 s, jede Taste ueberspringt.
 // WLAN, Uhrzeit und ntfy starten waehrenddessen schon (core::tick).
 
@@ -41,11 +41,11 @@ static void frame(M5Canvas& c, uint32_t t, const char* version) {
     c.setTextSize(3);
     c.setTextDatum(middle_center);
     c.setTextColor(ui::C_MAGENTA);
-    c.drawString("RAVENEYE", cx - 2 + j, 44);
+    c.drawString("RABENAUGE", cx - 2 + j, 44);
     c.setTextColor(ui::C_CYAN);
-    c.drawString("RAVENEYE", cx + 2 - j, 44);
+    c.drawString("RABENAUGE", cx + 2 - j, 44);
     c.setTextColor(ui::C_BRIGHT);
-    c.drawString("RAVENEYE", cx, 44);
+    c.drawString("RABENAUGE", cx, 44);
     if (j) c.fillRect(0, 30 + random(28), w, 2, ui::C_BG);  // Riss durch den Schriftzug
 
     c.setTextSize(1);

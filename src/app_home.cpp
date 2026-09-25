@@ -12,7 +12,7 @@ static int sel = 0, top = 0;
 
 static void draw() {
     ui::clear();
-    ui::drawHeader("RavenEye");
+    ui::drawHeader("Rabenauge");
     ui::drawHint("; .  wählen   Enter  öffnen   m  Ton");
     auto& c = ui::canvas;
     const int y0 = ui::contentTop() + 2, y1 = ui::contentBottom(true) - 2;

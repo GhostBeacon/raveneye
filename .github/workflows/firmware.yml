@@ -61,7 +61,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "v$FW_VERSION" out/raveneye.bin out/raveneye.bin.sha256 \
-            --title "RavenEye $FW_VERSION" \
+            --title "Rabenauge $FW_VERSION" \
             --notes "Gebaut aus ${GITHUB_SHA::7}. Fuer den M5Stack Cardputer ADV, Installation ueber den M5Launcher." \
             --target "$GITHUB_SHA" \
             --latest

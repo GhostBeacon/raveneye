@@ -40,7 +40,7 @@ void login() {
         JsonDocument body, resp;
         body["username"] = u;
         body["password"] = pass;
-        body["device_name"] = "RavenEye";
+        body["device_name"] = "Rabenauge (Cardputer)";
         body["scope"] = "monitor";  // nur Systemwerte, keine Dateien
         if (!code.isEmpty()) body["totp_code"] = code;
         net::Result r = net::postJson(api("/login"), "", body, resp);

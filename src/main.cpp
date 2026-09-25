@@ -5,6 +5,7 @@
 
 #include <M5Cardputer.h>
 #include <WiFi.h>
+#include <Preferences.h>
 #include <WiFiMulti.h>
 #include <time.h>
 
@@ -43,7 +44,8 @@ static View view = View::List;
 static int selected = 0;
 static int listTop = 0;
 static int detailScroll = 0;
-static bool muted = false;
+static bool muted = false;  // bleibt ueber Neustarts erhalten (NVS)
+static Preferences prefs;
 static bool dirty = true;
 static uint32_t lastActivity = 0;
 static bool dimmed = false;
@@ -351,7 +353,10 @@ static void handleKeys() {
         if (c == ';') up = true;
         else if (c == '.') down = true;
         else if (c == '`') back = true;
-        else if (c == 'm') muted = !muted;
+        else if (c == 'm') {
+            muted = !muted;
+            prefs.putBool("muted", muted);
+        }
     }
 
     if (view == View::List) {
@@ -399,6 +404,8 @@ void setup() {
     canvas.setTextDatum(top_left);
 
     M5Cardputer.Speaker.setVolume(96);
+    prefs.begin("raveneye", false);
+    muted = prefs.getBool("muted", false);
 
     WiFi.mode(WIFI_STA);
     for (auto& n : cfg.wifis) wifiMulti.addAP(n.ssid.c_str(), n.pass.c_str());

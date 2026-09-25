@@ -20,7 +20,7 @@ Eigene Firmware für den **M5Stack Cardputer ADV** (ESP32-S3FN8, 8 MB Flash, Tas
 | `;` / `.` | hoch / runter | scrollen |
 | Enter | Meldung öffnen | – |
 | `` ` `` (Esc) / Del | – | zurück |
-| `m` | Ton an/aus | Ton an/aus |
+| `m` | Ton an/aus (bleibt nach Neustart erhalten) | Ton an/aus |
 
 ## Konfiguration
 
@@ -102,7 +102,6 @@ Ergebnis: `.pio/build/cardputer-adv/firmware.bin`. Serielle Ausgabe über USB: `
 
 ## Offen
 
-- [ ] Ton bei neuen Meldungen prüfen (kam beim ersten Test nicht)
 - [ ] Statusanzeige für eigene Dienste
 - [ ] Dateimanager-Client
 - [ ] Menü zum Wechseln zwischen den Funktionen

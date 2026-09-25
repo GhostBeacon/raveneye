@@ -8,6 +8,7 @@ on:
   push:
     paths-ignore:
       - '**.md'
+      - 'docs/**'      # Banner/Bilder - kein neues Firmware-Release
   pull_request:
   workflow_dispatch:
 

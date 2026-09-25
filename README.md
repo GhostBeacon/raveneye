@@ -1,3 +1,8 @@
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/banner/banner-dunkel.png">
+  <img alt="RABENAUGE – Monitoring für den Cardputer ADV" src="docs/banner/banner-hell.png">
+</picture>
+
 # Rabenauge 🐦‍⬛
 
 Teil von **CORVUS** (siehe Repo hbcloud) – sichtbarer Name **Rabenauge**; Repo, Firmware-Datei (`raveneye.bin`) und Release-Links heißen weiter `raveneye`, damit der Launcher-Favorit unverändert funktioniert. Beim Anmelden am Server erscheint das Gerät als „Rabenauge (Cardputer)“ (bis Version 1.0.20 angemeldete Geräte weiter als „RavenEye“).
@@ -149,6 +154,7 @@ Ergebnis: `.pio/build/cardputer-adv/firmware.bin`. Serielle Ausgabe über USB: `
 ├── platformio.ini
 ├── .github/workflows/firmware.yml   # Bauen + Release
 ├── sd-beispiel/raveneye/config.txt  # Vorlage mit Platzhaltern
+├── docs/banner/                   # README-Banner + Link-Vorschau (make_banner.py, siehe dortige README)
 └── src/
     ├── main.cpp          # Start, Hauptschleife, Wechsel zwischen den Funktionen
     ├── boot.cpp/.h       # Startbild

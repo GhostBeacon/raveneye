@@ -1,9 +1,9 @@
 // Einstellungen und Geraeteinfo. Enter aendert bzw. zeigt Details.
 
-#include <SD.h>
 #include <WiFi.h>
 
 #include "apps.h"
+#include "auth.h"
 #include "core.h"
 #include "text.h"
 #include "ui.h"
@@ -13,17 +13,11 @@
 #endif
 
 static int sel = 0, top = 0;
-static uint64_t sdTotal = 0, sdUsed = 0;  // beim Oeffnen gelesen (usedBytes kann dauern)
-
-static void enter() {
-    sdTotal = SD.cardSize() ? SD.totalBytes() : 0;
-    sdUsed = sdTotal ? SD.usedBytes() : 0;
-}
 
 static const uint8_t BRIGHT_STEPS[] = {32, 64, 128, 192, 255};
 static const uint32_t DIM_STEPS[] = {30000, 60000, 120000, 300000, 0};
 
-enum Row { R_SOUND, R_BRIGHT, R_DIM, R_WIFI, R_CLOUD, R_SD, R_SYSTEM, R_RESTART, R_COUNT };
+enum Row { R_SOUND, R_BRIGHT, R_DIM, R_WIFI, R_SERVER, R_SYSTEM, R_RESTART, R_COUNT };
 
 static String label(int r) {
     switch (r) {
@@ -31,8 +25,7 @@ static String label(int r) {
         case R_BRIGHT: return "Helligkeit";
         case R_DIM: return "Abdunkeln nach";
         case R_WIFI: return "WLAN";
-        case R_CLOUD: return "Dateien";
-        case R_SD: return "SD-Karte";
+        case R_SERVER: return "Server";
         case R_SYSTEM: return "System";
         case R_RESTART: return "Neu starten";
     }
@@ -48,12 +41,10 @@ static String value(int r) {
             if (!s.dimAfterMs) return "nie";
             return s.dimAfterMs < 60000 ? String(s.dimAfterMs / 1000) + " s" : String(s.dimAfterMs / 60000) + " min";
         case R_WIFI: return core::online() ? text::sanitize(core::wifiSsid()) : String("getrennt");
-        case R_CLOUD: {
-            String u = filesUser();
-            return u.isEmpty() ? String("abgemeldet") : text::sanitize(u);
-        }
-        case R_SD: return sdTotal ? text::fmtBytes(sdTotal - sdUsed) + " frei" : String("-");
-        case R_SYSTEM: return "v" FW_VERSION;
+        case R_SERVER:
+            if (core::cfg.serverUrl.isEmpty()) return "nicht eingerichtet";
+            return auth::loggedIn() ? text::sanitize(auth::user()) : String("abgemeldet");
+        case R_SYSTEM: return "v" FW_VERSION "  RAM " + String(ESP.getFreeHeap() / 1024) + " KB";
         default: return "";
     }
 }
@@ -109,24 +100,19 @@ static void activate(int r) {
             ui::message("WLAN", t);
             break;
         }
-        case R_CLOUD:
-            if (filesUser().isEmpty()) {
-                ui::message("Dateien", "Nicht angemeldet. Anmelden unter Start > Dateien.");
-            } else if (ui::confirm("Dateien", "Abmelden? Das Token wird auf dem Server gelöscht.")) {
-                filesLogout();
-            }
-            break;
-        case R_SD:
-            enter();
-            if (sdTotal) {
-                ui::message("SD-Karte", "Größe: " + text::fmtBytes(sdTotal) + "\nBelegt: " + text::fmtBytes(sdUsed) +
-                                            "\nFrei: " + text::fmtBytes(sdTotal - sdUsed) +
-                                            "\n\nDownloads: /raveneye/downloads");
+        case R_SERVER:
+            if (core::cfg.serverUrl.isEmpty()) {
+                ui::message("Server", "server_url fehlt in /raveneye/config.txt.");
+            } else if (!auth::loggedIn()) {
+                auth::login();
+            } else if (ui::confirm("Server", "Abmelden? Das Token wird auch auf dem Server gelöscht.")) {
+                auth::logout();
             }
             break;
         case R_SYSTEM:
-            ui::message("System", "RavenEye " FW_VERSION "\nRAM frei: " + text::fmtBytes(ESP.getFreeHeap()) +
-                                      " (kleinster Stand " + text::fmtBytes(ESP.getMinFreeHeap()) + ")\nLaufzeit: " +
+            ui::message("System", "RavenEye " FW_VERSION "\nRAM frei: " + String(ESP.getFreeHeap() / 1024) +
+                                      " KB\nkleinster Stand: " + String(ESP.getMinFreeHeap() / 1024) +
+                                      " KB\ngrößter Block: " + String(ESP.getMaxAllocHeap() / 1024) + " KB\nLaufzeit: " +
                                       String(millis() / 60000) + " min\nAkku: " + String(M5Cardputer.Power.getBatteryLevel()) + " %");
             break;
         case R_RESTART:
@@ -143,4 +129,4 @@ static bool key(const Keys& k) {
     return true;
 }
 
-App settingsApp = {"Einstellungen", enter, key, draw, nullptr, nullptr};
+App settingsApp = {"Einstellungen", nullptr, key, draw, nullptr, nullptr};

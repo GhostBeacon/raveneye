@@ -18,13 +18,6 @@ struct App {
 extern App homeApp;
 extern App ntfyApp;
 extern App statusApp;
-extern App filesApp;
 extern App settingsApp;
 extern App systemApp;
 
-// Dateien: beim Start Anmeldung aus dem NVS laden; Abmelden/Name fuer die Einstellungen
-void filesBegin();
-void filesLogout();
-String filesUser();
-String filesToken();   // fuer andere Funktionen derselben API (System)
-void filesForget();    // Token ungueltig -> abmelden

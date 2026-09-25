@@ -17,7 +17,7 @@ struct Config {
     String ntfyTopics;              // kommagetrennt, z. B. "alarm,info"
     String statusUrl;               // Uptime Kuma, z. B. https://status.example.org (optional)
     String statusSlug;              // Slug der Statusseite
-    String cloudUrl;                // Dateimanager mit /api/v1, z. B. https://cloud.example.org (optional)
+    String serverUrl;               // Server mit /api/v1/system_stats, z. B. https://srv.example.org (optional)
 };
 
 // Liefert false und eine Fehlermeldung, wenn Karte/Datei fehlt oder Pflichtwerte leer sind.

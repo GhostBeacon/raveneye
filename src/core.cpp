@@ -16,7 +16,18 @@ std::deque<NtfyMessage> messages;
 bool ntfyVisible = false;
 bool keepAwake = false;
 
-static constexpr size_t MAX_MESSAGES = 40;
+static constexpr size_t MAX_MESSAGES = 30;
+static constexpr size_t MAX_TEXT = 1000;   // ntfy erlaubt 4096 - 30 volle Meldungen waeren ~120 KB RAM
+static constexpr size_t MAX_TITLE = 150;
+
+// Kuerzt UTF-8-sicher auf hoechstens max Bytes
+static void clip(String& s, size_t max) {
+    if (s.length() <= max) return;
+    size_t n = max - 3;
+    while (n > 0 && ((uint8_t)s[n] & 0xC0) == 0x80) n--;  // nicht mitten in einem Zeichen schneiden
+    s.remove(n);
+    s += "...";
+}
 static const char* TZ_BERLIN = "CET-1CEST,M3.5.0,M10.5.0/3";
 
 static bool dirty = true;
@@ -98,6 +109,8 @@ static void onMessage(NtfyMessage&& m) {
         if (e.id == m.id) return;
     m.title = text::sanitize(m.title);
     m.message = text::sanitize(m.message);
+    clip(m.title, MAX_TITLE);
+    clip(m.message, MAX_TEXT);
 
     // Beim Start nachgeladene Meldungen (aelter als 2 min) klingeln nicht
     bool fresh = timeValid() && time(nullptr) - (time_t)m.time < 120;
@@ -152,6 +165,19 @@ void tick() {
         toastText = "";
         dirty = true;
     }
+    // Speicher beobachten: seriell alle 30 s, Warnung einmalig, wenn es eng wird
+    static uint32_t lastHeapLog = 0;
+    static bool warned = false;
+    if (millis() - lastHeapLog > 30000) {
+        lastHeapLog = millis();
+        Serial.printf("heap frei %u, min %u, groesster Block %u\n", ESP.getFreeHeap(), ESP.getMinFreeHeap(),
+                      ESP.getMaxAllocHeap());
+        if (!warned && ESP.getMaxAllocHeap() < 20000) {
+            warned = true;
+            toast("Warnung: Arbeitsspeicher knapp", 8000);
+        }
+    }
+
     if (keepAwake) lastActivity = millis();
     if (!dimmed && settings.dimAfterMs && millis() - lastActivity > settings.dimAfterMs) {
         M5Cardputer.Display.setBrightness(max(4, settings.brightness / 8));

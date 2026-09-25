@@ -1,14 +1,15 @@
 // RavenEye - Firmware fuer den M5Stack Cardputer ADV.
 //
-// Startmenue mit Meldungen (ntfy), Status (Uptime Kuma), Dateien (eigener Dateimanager)
-// und Einstellungen. WLAN und ntfy laufen im Hintergrund weiter, egal welche App offen ist.
+// Monitoring: Startmenue mit Meldungen (ntfy), Status (Uptime Kuma), System (Live-Werte
+// eines Servers) und Einstellungen. Nur lesend - das Geraet aendert nichts auf den Servern. WLAN und ntfy laufen im Hintergrund weiter, egal welche App offen ist.
 //
 // Tasten ueberall:  ; . , /  = hoch runter links rechts     Enter = oeffnen
-//                   ` (Esc) oder Del = zurueck               1-5 im Menue = direkt oeffnen
+//                   ` (Esc) oder Del = zurueck               1-4 im Menue = direkt oeffnen
 
 #include <M5Cardputer.h>
 
 #include "apps.h"
+#include "auth.h"
 #include "config.h"
 #include "core.h"
 #include "keys.h"
@@ -64,7 +65,7 @@ void setup() {
 
     ui::begin();
     core::begin();
-    filesBegin();
+    auth::begin();
 }
 
 void loop() {

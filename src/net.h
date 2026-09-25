@@ -3,16 +3,10 @@
 
 #include <Arduino.h>
 #include <ArduinoJson.h>
-#include <FS.h>
-
 #include <HTTPClient.h>
 #include <WiFiClientSecure.h>
 
-#include <functional>
-
 namespace net {
-
-using Progress = std::function<void(uint64_t done, uint64_t total)>;
 
 struct Result {
     int status = 0;   // HTTP-Status, <= 0 = Verbindungsfehler
@@ -24,19 +18,8 @@ struct Result {
 // GET und JSON lesen. filter (optional) spart Speicher bei grossen Antworten.
 Result getJson(const String& url, const String& bearer, JsonDocument& out, const JsonDocument* filter = nullptr);
 
-// POST mit JSON-Koerper; Antwort (falls JSON) landet in out.
+// POST mit JSON-Koerper. Die Antwort (auch eine Fehlerantwort) landet in out.
 Result postJson(const String& url, const String& bearer, const JsonDocument& body, JsonDocument& out);
-
-// GET direkt in eine Datei (SD). Bricht nach 15 s ohne Daten ab.
-Result download(const String& url, const String& bearer, fs::File& file, const Progress& progress);
-
-// GET in einen String, hoechstens maxBytes (Rest wird verworfen, truncated = true).
-Result getText(const String& url, const String& bearer, String& out, size_t maxBytes, bool& truncated);
-
-// multipart/form-data-Upload einer Datei, gestreamt von der SD-Karte.
-Result uploadFile(const String& url, const String& bearer, const char* field, fs::File& file,
-                  const String& fileName, const String& extraName, const String& extraValue,
-                  JsonDocument& out, const Progress& progress);
 
 // Dauerhafte Verbindung fuer regelmaessige Abfragen desselben Servers (spart den
 // TLS-Handshake bei jeder Abfrage). close() gibt den Speicher frei.

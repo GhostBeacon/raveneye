@@ -19,6 +19,6 @@ ntfy_topics=<NTFY_TOPIC>
 status_url=https://<STATUS_HOST>
 status_slug=<SLUG>
 
-# Dateien (optional): Dateimanager mit JSON-API unter <cloud_url>/api/v1
-# Anmeldung erfolgt auf dem Geraet, Passwoerter gehoeren NICHT in diese Datei.
-cloud_url=https://<CLOUD_HOST>
+# System (optional): Server mit /api/v1/system_stats (Nur-Lese-Anmeldung auf dem Geraet)
+# Passwoerter gehoeren NICHT in diese Datei.
+server_url=https://<SERVER_HOST>

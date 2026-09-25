@@ -1,5 +1,5 @@
-// Live-Systemwerte eines Servers ueber <cloud_url>/api/v1/system_stats (gleiche Anmeldung wie
-// "Dateien"). Alle 5 s neu, Verbindung bleibt dabei offen. Solange die Funktion offen ist,
+// Live-Systemwerte eines Servers ueber <server_url>/api/v1/system_stats (Nur-Lese-Token, siehe
+// auth.h). Alle 5 s neu, Verbindung bleibt dabei offen. Solange die Funktion offen ist,
 // dunkelt das Display nicht ab - am Ladekabel als dauerhafte Anzeige nutzbar.
 //
 // Seiten (, / oder Tab):  Live  ->  Verlauf (CPU, Temperatur)  ->  Backups & Energie
@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "apps.h"
+#include "auth.h"
 #include "core.h"
 #include "net.h"
 #include "text.h"
@@ -48,7 +49,7 @@ static double prevTs = 0, prevRx = 0, prevTx = 0, prevDr = 0, prevDw = 0;
 static float histCpu[HISTORY], histTemp[HISTORY];
 static int histLen = 0;
 
-static bool ready() { return !core::cfg.cloudUrl.isEmpty() && !filesToken().isEmpty(); }
+static bool ready() { return !core::cfg.serverUrl.isEmpty() && auth::loggedIn(); }
 
 static float num(JsonVariant v, float fallback = -1) { return v.isNull() ? fallback : v.as<float>(); }
 
@@ -67,16 +68,19 @@ static void poll() {
     lastPoll = millis();
     if (!ready()) return;
     JsonDocument d;
-    net::Result r = session.getJson(core::cfg.cloudUrl + "/api/v1/system_stats", filesToken(), d);
+    net::Result r = session.getJson(core::cfg.serverUrl + "/api/v1/system_stats", auth::token(), d);
     if (r.status == 401) {
         session.close();
-        filesForget();
-        lastError = "abgemeldet - unter Dateien neu anmelden";
+        auth::forget();
+        lastError = "abgemeldet - Enter: neu anmelden";
         core::markDirty();
         return;
     }
     if (!r.ok()) {
-        lastError = r.status == 403 ? "für dieses Konto nicht freigegeben" : r.error;
+        lastError = r.code == "scope"      ? "Token hat keinen Zugriff"
+                    : r.status == 403      ? "für dieses Konto nicht freigegeben"
+                    : r.status == 404      ? "Server kennt system_stats nicht (Update fehlt?)"
+                                           : r.error;
         core::markDirty();
         return;
     }
@@ -349,8 +353,8 @@ static void draw() {
     if (!ready()) {
         c.setTextColor(TFT_LIGHTGREY);
         int y = ui::contentTop() + 6;
-        String t = core::cfg.cloudUrl.isEmpty() ? "Nicht eingerichtet: cloud_url in /raveneye/config.txt eintragen."
-                                                : "Nicht angemeldet. Die Anmeldung erfolgt unter \"Dateien\".";
+        String t = core::cfg.serverUrl.isEmpty() ? "Nicht eingerichtet: server_url in /raveneye/config.txt eintragen."
+                                                 : "Nicht angemeldet.\n\nEnter: Anmelden (Nur-Lese-Zugang, nur Systemwerte)";
         for (auto& l : ui::wrap(t, c.width() - 8)) {
             c.drawString(l, 4, y);
             y += ui::LINE_H;
@@ -376,6 +380,13 @@ static void draw() {
 
 static bool key(const Keys& k) {
     if (k.back) return false;
+    if (!ready()) {
+        if (k.enter && !core::cfg.serverUrl.isEmpty()) {
+            auth::login();
+            if (ready()) poll();
+        }
+        return true;
+    }
     if (k.right || k.tab) page = (page + 1) % PAGES;
     else if (k.left) page = (page + PAGES - 1) % PAGES;
     else if (k.has('r')) poll();
@@ -383,8 +394,8 @@ static bool key(const Keys& k) {
 }
 
 static String badge() {
-    if (core::cfg.cloudUrl.isEmpty()) return "nicht eingerichtet";
-    if (filesToken().isEmpty()) return "abgemeldet";
+    if (core::cfg.serverUrl.isEmpty()) return "nicht eingerichtet";
+    if (!auth::loggedIn()) return "abgemeldet";
     if (!st.valid) return String();
     return (st.cpu >= 0 ? text::fmtDecimal(st.cpu, 0) + " %" : String()) +
            (st.temp >= 0 ? "  " + text::fmtDecimal(st.temp, 0) + " °C" : String());

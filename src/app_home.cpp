@@ -1,4 +1,4 @@
-// Startmenue: Meldungen, Status, Dateien, Einstellungen (auch ueber die Tasten 1-4)
+// Startmenue: Meldungen, Status, System, Einstellungen (auch ueber die Tasten 1-4)
 
 #include "apps.h"
 #include "core.h"
@@ -6,7 +6,7 @@
 
 App* openApp(App* app);  // main.cpp
 
-static App* const entries[] = {&ntfyApp, &statusApp, &systemApp, &filesApp, &settingsApp};
+static App* const entries[] = {&ntfyApp, &statusApp, &systemApp, &settingsApp};
 static constexpr int COUNT = sizeof(entries) / sizeof(entries[0]);
 static int sel = 0, top = 0;
 

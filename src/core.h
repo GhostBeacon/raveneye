@@ -22,7 +22,7 @@ extern Config cfg;
 extern Settings settings;
 extern Preferences prefs;
 extern NtfyClient ntfy;
-extern std::deque<NtfyMessage> messages;  // neueste vorn, max. 40
+extern std::deque<NtfyMessage> messages;  // neueste vorn, max. 30
 
 void begin();  // nach loadConfig()
 void tick();

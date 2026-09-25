@@ -68,9 +68,10 @@ bool loadConfig(Config& cfg, String& error) {
         else if (key == "ntfy_topics") cfg.ntfyTopics = val;
         else if (key == "status_url") cfg.statusUrl = val;
         else if (key == "status_slug") cfg.statusSlug = val;
-        else if (key == "cloud_url") cfg.cloudUrl = val;
+        else if (key == "server_url") cfg.serverUrl = val;
     }
     f.close();
+    SD.end();  // Karte wird danach nicht mehr gebraucht
 
     for (auto& n : nets)
         if (!n.ssid.isEmpty()) cfg.wifis.push_back(n);
@@ -79,7 +80,7 @@ bool loadConfig(Config& cfg, String& error) {
         error = "wifi_ssid fehlt";
         return false;
     }
-    for (String* url : {&cfg.statusUrl, &cfg.cloudUrl}) {
+    for (String* url : {&cfg.statusUrl, &cfg.serverUrl}) {
         while (url->endsWith("/")) url->remove(url->length() - 1);
         if (!url->isEmpty() && !url->startsWith("https://")) {
             error = "URL muss https:// sein";

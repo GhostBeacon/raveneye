@@ -1,16 +1,15 @@
 # RavenEye 🐦‍⬛
 
-Eigene Firmware für den **M5Stack Cardputer ADV** (ESP32-S3FN8, 8 MB Flash, Tastatur-Chip TCA8418), gestartet über den [M5Launcher](https://github.com/bmorcelli/Launcher). Ein kleines Auge, das wach bleibt: Es empfängt Push-Meldungen und schlägt Alarm, wenn etwas passiert.
+Eigene Firmware für den **M5Stack Cardputer ADV** (ESP32-S3FN8, 8 MB Flash, Tastatur-Chip TCA8418), gestartet über den [M5Launcher](https://github.com/bmorcelli/Launcher). Ein kleines Auge, das wach bleibt: reines **Monitoring** – es zeigt an und meldet, ändert aber nichts auf den Servern.
 
-Ein Startmenü mit fünf Funktionen. WLAN und ntfy laufen immer im Hintergrund weiter, auch wenn gerade eine andere Funktion offen ist – neue Meldungen erscheinen dann als Hinweis unten am Bildschirm.
+Ein Startmenü mit vier Funktionen. WLAN und ntfy laufen immer im Hintergrund weiter, auch wenn gerade eine andere Funktion offen ist – neue Meldungen erscheinen dann als Hinweis unten am Bildschirm.
 
 | # | Funktion | Was sie tut |
 |---|---|---|
 | 1 | **Meldungen** | [ntfy](https://ntfy.sh)-Empfänger für ein oder mehrere Topics |
 | 2 | **Status** | Dienste einer [Uptime-Kuma](https://github.com/louislam/uptime-kuma)-Statusseite, mit Verlauf |
 | 3 | **System** | Live-Werte eines Servers (CPU, Temperatur, RAM, Netz, Platte, Strom, Backups) – auch als Dauer-Anzeige |
-| 4 | **Dateien** | Client für einen eigenen Dateimanager mit JSON-API (`/api/v1`): durchsuchen, herunter- und hochladen |
-| 5 | **Einstellungen** | Ton, Helligkeit, Abdunkeln, WLAN, SD-Karte, Abmelden, Neustart |
+| 4 | **Einstellungen** | Ton, Helligkeit, Abdunkeln, WLAN, Server-Anmeldung, Speicher, Neustart |
 
 ## Bedienung
 
@@ -20,10 +19,10 @@ Ein Startmenü mit fünf Funktionen. WLAN und ntfy laufen immer im Hintergrund w
 | `,` `/` | seitenweise zurück / vor |
 | Enter | öffnen / auswählen |
 | `` ` `` (Esc) oder Del | zurück – aus einer Funktion ins Menü |
-| `1`–`5` | im Menü: Funktion direkt öffnen |
+| `1`–`4` | im Menü: Funktion direkt öffnen |
 | `m` | im Menü und bei den Meldungen: Ton an/aus (bleibt gespeichert) |
 
-**Texteingabe** (Anmeldung, neuer Ordner): Enter = OK, Del = Zeichen löschen, **Fn + `** = abbrechen, Tab = Passwort zeigen/verbergen.
+**Texteingabe** (Anmeldung): Enter = OK, Del = Zeichen löschen, **Fn + `** = abbrechen, Tab = Passwort zeigen/verbergen.
 
 Oben rechts: Punkt grün = ntfy-Stream läuft, gelb = WLAN ohne Stream, rot = kein WLAN; `• 3` = ungelesene Meldungen; dazu Uhrzeit und Akku. Die Version steht auf dem Startbildschirm (`1.0.<Build-Nr.>`, lokal gebaut: `dev`).
 
@@ -41,19 +40,14 @@ Oben rechts: Punkt grün = ntfy-Stream läuft, gelb = WLAN ohne Stream, rot = ke
 
 ### System
 
-- Fragt alle 5 s `<cloud_url>/api/v1/system_stats` ab – mit derselben Anmeldung wie „Dateien“. Die Verbindung bleibt dabei offen (kein TLS-Handshake pro Abfrage) und wird beim Verlassen geschlossen.
+- Fragt alle 5 s `<server_url>/api/v1/system_stats` ab. Die Verbindung bleibt dabei offen (kein TLS-Handshake pro Abfrage) und wird beim Verlassen geschlossen.
 - **Solange „System“ offen ist, dunkelt das Display nicht ab** – am Ladekabel als dauerhafte Anzeige neben dem Server.
 - Drei Seiten, Wechsel mit `,` `/` oder Tab:
   1. **Live:** CPU (gesamt, Takt, Balken pro Kern), Temperatur, Last, RAM, Netz- und Plattendurchsatz (aus der Differenz zweier Abfragen), Stromverbrauch, Laufzeit. Unterspannung, Drosselung oder Temperaturlimit erscheinen als rote Zeile.
   2. **Verlauf:** CPU und Temperatur der letzten ~10 Minuten.
   3. **Backups & Energie:** letzter Lauf je Backup (grün ok, orange überfällig, rot fehlgeschlagen), Verbrauch im Monat und Jahr.
 - Werte, die der Server nicht liefert, erscheinen als „-“. Der Server entscheidet, welche Konten die Werte sehen dürfen (sonst „nicht freigegeben“).
-
-### Dateien
-
-- Anmeldung auf dem Gerät mit Benutzername, Passwort und – falls aktiv – 2FA-Code. Das Gerät erhält ein eigenes Token (Gerätename „RavenEye“); Passwort und Code werden nicht gespeichert.
-- Enter öffnet Ordner; bei Dateien: **auf SD-Karte laden** (nach `/raveneye/downloads`), **anzeigen** (Textdateien bis 16 KB) oder **in den Papierkorb**.
-- `u` lädt eine Datei von der SD-Karte in den aktuellen Ordner hoch (gestreamt, auch große Dateien), `n` legt einen Ordner an, `x` verschiebt in den Papierkorb, `i` zeigt Konto und Speicher, `r` lädt neu.
+- **Anmeldung** beim ersten Öffnen (oder unter Einstellungen → Server) mit Benutzername, Passwort und ggf. 2FA-Code. Das Gerät fordert ein **Nur-Lese-Token** an (`scope: monitor`, Gerätename „RavenEye“): Es darf nur Systemwerte lesen – keine Dateien, nichts löschen. Liefert der Server kein solches Token, wird es sofort wieder verworfen. Passwort und Code werden nicht gespeichert.
 
 ### Schrift
 
@@ -72,14 +66,14 @@ ntfy_server=ntfy.sh
 ntfy_topics=<TOPIC>[,<TOPIC2>]
 status_url=https://<STATUS_HOST>   # optional
 status_slug=<SLUG>
-cloud_url=https://<CLOUD_HOST>     # optional
+server_url=https://<SERVER_HOST>   # optional, für „System“
 ```
 
 - Pro Zeile `name=wert`. Zeilen, die mit `#` beginnen, sind Kommentare. Leerzeichen am Rand des Werts werden entfernt.
 - Bis zu 9 WLANs (`wifi_*`, `wifi2_*` … `wifi9_*`). Verbunden wird mit dem stärksten, das gerade erreichbar ist; bei Abbruch wird alle 10 s neu gesucht.
 - Die WLANs müssen 2,4 GHz können, der ESP32-S3 kann kein 5 GHz.
 - Topics: nur `A–Z a–z 0–9 - _`, mehrere mit Komma ohne Leerzeichen.
-- `status_url` und `cloud_url`: nur `https://`, ohne Pfad am Ende. Fehlen sie, zeigt die jeweilige Funktion „nicht eingerichtet“.
+- `status_url` und `server_url`: nur `https://`, ohne Pfad am Ende. Fehlen sie, zeigt die jeweilige Funktion „nicht eingerichtet“.
 
 | Fehleranzeige | Ursache |
 |---|---|
@@ -87,7 +81,7 @@ cloud_url=https://<CLOUD_HOST>     # optional
 | `/raveneye/config.txt fehlt` | Ordner oder Dateiname falsch |
 | `wifi_ssid fehlt` | kein einziges WLAN eingetragen oder Schlüssel falsch geschrieben |
 | `ntfy_topics ungueltig` | Leerzeichen, spitze Klammern oder Sonderzeichen im Topic |
-| `URL muss https:// sein` | `status_url` oder `cloud_url` beginnt nicht mit `https://` |
+| `URL muss https:// sein` | `status_url` oder `server_url` beginnt nicht mit `https://` |
 
 ## Installieren
 
@@ -113,6 +107,19 @@ Einmalig als Favorit eintragen: SD-Karte in den Rechner, `/config.conf` vorher s
 
 Zum Launcher zurück: beim Einschalten eine Taste drücken, solange der Launcher-Startbildschirm zu sehen ist.
 
+## Speicher und andere Firmwares
+
+| | RavenEye |
+|---|---|
+| Flash (App) | ~1,24 MB – der Launcher reserviert ~1,25 MB |
+| davon eigener Code | ~110 KB, der Rest ist WLAN, TLS, Anzeige- und Hardware-Bibliotheken |
+| RAM statisch | ~52 KB |
+| RAM zur Laufzeit | Bildpuffer 65 KB, WLAN ~60 KB, je TLS-Verbindung ~45 KB (ntfy immer, System nur solange offen) |
+
+Der ESP32-S3FN8 hat 8 MB Flash und keinen PSRAM. Der M5Launcher (ab 2.8) belegt selbst ~1,4 MB und kann mehrere Firmwares **gleichzeitig** im Flash halten; beim Start wählt man per Taste, welche läuft. Ob RavenEye neben einer anderen Firmware Platz hat, zeigt der Launcher im **PMan** (Partition Manager; freier Bereich muss ≥ 1,25 MB sein). Große Firmwares mit eigener Daten-Partition können den Rest des Flash belegen – dann wird die jeweils andere beim Wechsel neu von der SD-Karte installiert.
+
+Arbeitsspeicher prüfen: **Einstellungen → System** zeigt freien RAM, den kleinsten Stand seit dem Start und den größten zusammenhängenden Block (eine TLS-Verbindung braucht 16 KB am Stück). Fällt der größte Block unter 20 KB, erscheint eine Warnung. Über USB meldet die Firmware die Werte alle 30 s (`pio device monitor`).
+
 ## Bauen
 
 ```bash
@@ -127,8 +134,9 @@ Ergebnis: `.pio/build/cardputer-adv/firmware.bin`. Serielle Ausgabe über USB: `
 
 - **TLS mit Zertifikatsprüfung.** In [`src/certs.h`](src/certs.h) stehen nur ISRG Root X1 und X2 (Let's Encrypt), mit SHA-256-Fingerabdruck. Verbunden wird erst nach erfolgreichem NTP-Abgleich, denn ohne gültige Uhrzeit schlägt die Prüfung fehl.
 - **Zugangsdaten nur auf der SD-Karte**, nie in Firmware oder Repo. Wer die Karte hat, hat WLAN-Passwort und Topic.
-- **Datei-Token im internen Speicher (NVS)**, nicht auf der SD-Karte – aber unverschlüsselt. Geht das Gerät verloren, das Token auf dem Server widerrufen (Gerät „RavenEye“). Abmelden in den Einstellungen löscht es auch auf dem Server.
-- Alle Verbindungen (ntfy, Status, Dateien) laufen über HTTPS mit Prüfung gegen dieselben Stammzertifikate. Server mit Zertifikaten anderer Anbieter als Let's Encrypt werden abgelehnt.
+- **Nur lesend.** RavenEye ändert nichts auf den Servern. Das Server-Token ist ein Nur-Lese-Token (nur Systemwerte).
+- **Token im internen Speicher (NVS), unverschlüsselt.** Der NVS-Bereich wird vom M5Launcher mit allen installierten Firmwares geteilt – jede andere Firmware auf dem Gerät kann ihn auslesen. Deshalb nur ein Nur-Lese-Token. Geht das Gerät verloren: Token auf dem Server widerrufen (Gerät „RavenEye“). Abmelden in den Einstellungen löscht es auch dort.
+- Alle Verbindungen (ntfy, Status, System) laufen über HTTPS mit Prüfung gegen dieselben Stammzertifikate. Server mit Zertifikaten anderer Anbieter als Let's Encrypt werden abgelehnt.
 
 ## Aufbau
 
@@ -138,25 +146,25 @@ Ergebnis: `.pio/build/cardputer-adv/firmware.bin`. Serielle Ausgabe über USB: `
 ├── sd-beispiel/raveneye/config.txt  # Vorlage mit Platzhaltern
 └── src/
     ├── main.cpp          # Start, Hauptschleife, Wechsel zwischen den Funktionen
-    ├── core.cpp/.h       # Hintergrund: WLAN, ntfy, Meldungen, Einstellungen, Abdunkeln
+    ├── core.cpp/.h       # Hintergrund: WLAN, ntfy, Meldungen, Einstellungen, Abdunkeln, Speicher
     ├── keys.cpp/.h       # Tastatur mit Wiederholung
-    ├── ui.cpp/.h         # Kopfzeile, Listen, Dialoge, Texteingabe, Fortschritt
+    ├── ui.cpp/.h         # Kopfzeile, Listen, Dialoge, Texteingabe
     ├── text.cpp/.h       # UTF-8, Zeichenvorrat, Zahlen/Zeiten
-    ├── net.cpp/.h        # HTTPS: JSON, Download, Upload (gestreamt)
+    ├── net.cpp/.h        # HTTPS + JSON (einmalig oder als offene Verbindung)
+    ├── auth.cpp/.h       # Anmeldung mit Nur-Lese-Token
     ├── app_home.cpp      # Startmenü
     ├── app_ntfy.cpp      # Meldungen
     ├── app_status.cpp    # Uptime Kuma
     ├── app_system.cpp    # Systemwerte (Live, Verlauf, Backups)
-    ├── app_files.cpp     # Dateien
     ├── app_settings.cpp  # Einstellungen
     ├── ntfy.cpp/.h       # ntfy-Stream-Client
-    ├── config.cpp/.h     # SD-Konfiguration
+    ├── config.cpp/.h     # SD-Konfiguration (Karte wird danach abgemeldet)
     ├── certs.h           # Root-Zertifikate
     └── fonts.c/.h        # Schriften (u8g2-Format, Lizenz im Dateikopf)
 ```
 
 ## Offen
 
-- [ ] Mehr Dateiaktionen (umbenennen, verschieben, Papierkorb wiederherstellen)
 - [ ] Statusanzeige auch im Hintergrund prüfen und bei Ausfall melden
 - [ ] System: Warnschwellen (Temperatur, RAM) konfigurierbar machen
+- [ ] Falls der RAM knapp wird: Bildpuffer auf 8 Bit Farbtiefe (spart 32 KB)

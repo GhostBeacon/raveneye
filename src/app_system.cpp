@@ -24,6 +24,12 @@ struct Backup {
     bool ok = false, stale = true;
 };
 
+struct Disk {
+    String name;
+    bool mounted = false;
+    double total = 0, used = 0;  // Bytes
+};
+
 struct Stats {
     bool valid = false;
     float cpu = -1, temp = -1, load1 = -1, powerPi = -1, powerTotal = -1;
@@ -35,6 +41,8 @@ struct Stats {
     double netRx = -1, netTx = -1, diskR = -1, diskW = -1;  // Bytes/s
     float monthKwh = -1, monthCost = -1, yearKwh = -1;
     std::vector<Backup> backups;
+    bool hasDisks = false;  // aelterer Server liefert kein "disks"
+    std::vector<Disk> disks;
 };
 
 static net::Session session;
@@ -42,7 +50,7 @@ static Stats st;
 static String lastError;
 static uint32_t lastPoll = 0;
 static int page = 0;
-static constexpr int PAGES = 3;
+static constexpr int PAGES = 4;
 
 // Zaehler fuer Datenraten
 static double prevTs = 0, prevRx = 0, prevTx = 0, prevDr = 0, prevDw = 0;
@@ -141,6 +149,17 @@ static void poll() {
             x.stale = o["stale"] | true;
             s.backups.push_back(x);
         }
+    }
+
+    JsonArray ds = d["disks"];
+    s.hasDisks = !ds.isNull();
+    for (JsonObject o : ds) {
+        Disk x;
+        x.name = text::sanitize(o["name"] | "?");
+        x.mounted = o["mounted"] | false;
+        x.total = o["total_bytes"] | 0.0;
+        x.used = o["used_bytes"] | 0.0;
+        s.disks.push_back(x);
     }
 
     // Datenraten aus der Differenz zweier Abfragen (Zaehler seit Systemstart)
@@ -346,8 +365,54 @@ static void drawBackups() {
     }
 }
 
+// Plattengroessen wie df -h (1024er-Schritte): 850 GB, 1,23 TB
+static String fmtDisk(double b) {
+    const double GB = 1024.0 * 1024 * 1024, TB = GB * 1024;
+    if (b >= TB) return text::fmtDecimal(b / TB, b < 10 * TB ? 2 : 1) + " TB";
+    return text::fmtDecimal(b / GB, b < 10 * GB ? 1 : 0) + " GB";
+}
+
+static void drawDisks() {
+    auto& c = ui::canvas;
+    const int w = c.width(), L = ui::LINE_H;
+    int y = ui::contentTop() + 2;
+    if (!st.hasDisks) {
+        c.setTextColor(ui::C_HINT);
+        for (auto& l : ui::wrap("Der Server liefert noch keine Plattenbelegung (Update von mycloud fehlt).", w - 8)) {
+            c.drawString(l, 4, y);
+            y += L;
+        }
+        return;
+    }
+    // Je Platte: Name und "belegt / gesamt", darunter ein Balken mit Prozent
+    for (auto& d : st.disks) {
+        c.setTextColor(ui::C_BRIGHT);
+        c.setFont(&ui::FONT_BOLD);
+        c.drawString(d.name, 4, y);
+        c.setFont(&ui::FONT);
+        if (!d.mounted || d.total <= 0) {
+            c.setTextColor(ui::C_ERR);
+            String t = "nicht eingehängt";
+            c.drawString(t, w - 4 - c.textWidth(t), y);
+            bar(4, y + L, w - 8, 6, 0, ui::C_ERR);
+        } else {
+            float pct = 100.0f * d.used / d.total;
+            uint16_t col = pct >= 90 ? ui::C_ERR : pct >= 80 ? ui::C_WARN : ui::C_OK;
+            String t = fmtDisk(d.used) + " / " + fmtDisk(d.total);
+            c.setTextColor(ui::C_TEXT);
+            c.drawString(t, w - 4 - c.textWidth(t), y);
+            String p = text::fmtDecimal(pct, 0) + " %";
+            int pw = c.textWidth("100 %");
+            bar(4, y + L + 1, w - 14 - pw, 6, pct, col);
+            c.setTextColor(col);
+            c.drawString(p, w - 4 - c.textWidth(p), y + L - 2);
+        }
+        y += 2 * L + 4;
+    }
+}
+
 static void draw() {
-    static const char* const TITLES[] = {"System", "System: Verlauf", "System: Backups"};
+    static const char* const TITLES[] = {"System", "System: Verlauf", "System: Backups", "System: Speicher"};
     ui::clear();
     ui::drawHeader(TITLES[page]);
     auto& c = ui::canvas;
@@ -374,7 +439,8 @@ static void draw() {
     }
     if (page == 0) drawLive();
     else if (page == 1) drawHistory();
-    else drawBackups();
+    else if (page == 2) drawBackups();
+    else drawDisks();
     if (page != 0) ui::drawHint(lastError.isEmpty() ? ", /  Seite wechseln   ` zurück" : "Fehler: " + lastError);
     else if (!lastError.isEmpty()) ui::drawHint("Fehler: " + lastError);
 }

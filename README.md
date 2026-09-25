@@ -10,7 +10,7 @@ Ein Startmenü mit vier Funktionen. WLAN und ntfy laufen immer im Hintergrund we
 |---|---|---|
 | 1 | **Meldungen** | [ntfy](https://ntfy.sh)-Empfänger für ein oder mehrere Topics |
 | 2 | **Status** | Dienste einer [Uptime-Kuma](https://github.com/louislam/uptime-kuma)-Statusseite, mit Verlauf |
-| 3 | **System** | Live-Werte eines Servers (CPU, Temperatur, RAM, Netz, Platte, Strom, Backups) – auch als Dauer-Anzeige |
+| 3 | **System** | Live-Werte eines Servers (CPU, Temperatur, RAM, Netz, Platte, Strom, Backups, Plattenbelegung) – auch als Dauer-Anzeige |
 | 4 | **Einstellungen** | Ton, Helligkeit, Abdunkeln, WLAN, Server-Anmeldung, Speicher, Neustart |
 
 ## Bedienung
@@ -44,10 +44,11 @@ Oben rechts: Punkt grün = ntfy-Stream läuft, gelb = WLAN ohne Stream, rot = ke
 
 - Fragt alle 5 s `<server_url>/api/v1/system_stats` ab. Die Verbindung bleibt dabei offen (kein TLS-Handshake pro Abfrage) und wird beim Verlassen geschlossen.
 - **Solange „System“ offen ist, dunkelt das Display nicht ab** – am Ladekabel als dauerhafte Anzeige neben dem Server.
-- Drei Seiten, Wechsel mit `,` `/` oder Tab:
+- Vier Seiten, Wechsel mit `,` `/` oder Tab:
   1. **Live:** CPU (gesamt, Takt, Balken pro Kern), Temperatur, Last, RAM, Netz- und Plattendurchsatz (aus der Differenz zweier Abfragen), Stromverbrauch, Laufzeit. Unterspannung, Drosselung oder Temperaturlimit erscheinen als rote Zeile.
   2. **Verlauf:** CPU und Temperatur der letzten ~10 Minuten.
   3. **Backups & Energie:** letzter Lauf je Backup (grün ok, orange überfällig, rot fehlgeschlagen), Verbrauch im Monat und Jahr.
+  4. **Speicher:** Belegung von HDD, Backup-HDD und SD-Karte (belegt / gesamt, Balken ab 80 % orange, ab 90 % rot). Eine nicht eingehängte Platte erscheint rot.
 - Werte, die der Server nicht liefert, erscheinen als „-“. Der Server entscheidet, welche Konten die Werte sehen dürfen (sonst „nicht freigegeben“).
 - **Anmeldung** beim ersten Öffnen (oder unter Einstellungen → Server) mit Benutzername, Passwort und ggf. 2FA-Code. Das Gerät fordert ein **Nur-Lese-Token** an (`scope: monitor`, Gerätename „RavenEye“): Es darf nur Systemwerte lesen – keine Dateien, nichts löschen. Liefert der Server kein solches Token, wird es sofort wieder verworfen. Passwort und Code werden nicht gespeichert.
 

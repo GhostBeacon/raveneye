@@ -6,7 +6,7 @@
 
 App* openApp(App* app);  // main.cpp
 
-static App* const entries[] = {&ntfyApp, &statusApp, &filesApp, &settingsApp};
+static App* const entries[] = {&ntfyApp, &statusApp, &systemApp, &filesApp, &settingsApp};
 static constexpr int COUNT = sizeof(entries) / sizeof(entries[0]);
 static int sel = 0, top = 0;
 

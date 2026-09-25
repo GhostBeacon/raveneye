@@ -14,6 +14,7 @@ Preferences prefs;
 NtfyClient ntfy;
 std::deque<NtfyMessage> messages;
 bool ntfyVisible = false;
+bool keepAwake = false;
 
 static constexpr size_t MAX_MESSAGES = 40;
 static const char* TZ_BERLIN = "CET-1CEST,M3.5.0,M10.5.0/3";
@@ -151,6 +152,7 @@ void tick() {
         toastText = "";
         dirty = true;
     }
+    if (keepAwake) lastActivity = millis();
     if (!dimmed && settings.dimAfterMs && millis() - lastActivity > settings.dimAfterMs) {
         M5Cardputer.Display.setBrightness(max(4, settings.brightness / 8));
         dimmed = true;

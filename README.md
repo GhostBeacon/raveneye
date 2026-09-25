@@ -2,14 +2,15 @@
 
 Eigene Firmware für den **M5Stack Cardputer ADV** (ESP32-S3FN8, 8 MB Flash, Tastatur-Chip TCA8418), gestartet über den [M5Launcher](https://github.com/bmorcelli/Launcher). Ein kleines Auge, das wach bleibt: Es empfängt Push-Meldungen und schlägt Alarm, wenn etwas passiert.
 
-Ein Startmenü mit vier Funktionen. WLAN und ntfy laufen immer im Hintergrund weiter, auch wenn gerade eine andere Funktion offen ist – neue Meldungen erscheinen dann als Hinweis unten am Bildschirm.
+Ein Startmenü mit fünf Funktionen. WLAN und ntfy laufen immer im Hintergrund weiter, auch wenn gerade eine andere Funktion offen ist – neue Meldungen erscheinen dann als Hinweis unten am Bildschirm.
 
 | # | Funktion | Was sie tut |
 |---|---|---|
 | 1 | **Meldungen** | [ntfy](https://ntfy.sh)-Empfänger für ein oder mehrere Topics |
 | 2 | **Status** | Dienste einer [Uptime-Kuma](https://github.com/louislam/uptime-kuma)-Statusseite, mit Verlauf |
-| 3 | **Dateien** | Client für einen eigenen Dateimanager mit JSON-API (`/api/v1`): durchsuchen, herunter- und hochladen |
-| 4 | **Einstellungen** | Ton, Helligkeit, Abdunkeln, WLAN, SD-Karte, Abmelden, Neustart |
+| 3 | **System** | Live-Werte eines Servers (CPU, Temperatur, RAM, Netz, Platte, Strom, Backups) – auch als Dauer-Anzeige |
+| 4 | **Dateien** | Client für einen eigenen Dateimanager mit JSON-API (`/api/v1`): durchsuchen, herunter- und hochladen |
+| 5 | **Einstellungen** | Ton, Helligkeit, Abdunkeln, WLAN, SD-Karte, Abmelden, Neustart |
 
 ## Bedienung
 
@@ -19,7 +20,7 @@ Ein Startmenü mit vier Funktionen. WLAN und ntfy laufen immer im Hintergrund we
 | `,` `/` | seitenweise zurück / vor |
 | Enter | öffnen / auswählen |
 | `` ` `` (Esc) oder Del | zurück – aus einer Funktion ins Menü |
-| `1`–`4` | im Menü: Funktion direkt öffnen |
+| `1`–`5` | im Menü: Funktion direkt öffnen |
 | `m` | im Menü und bei den Meldungen: Ton an/aus (bleibt gespeichert) |
 
 **Texteingabe** (Anmeldung, neuer Ordner): Enter = OK, Del = Zeichen löschen, **Fn + `** = abbrechen, Tab = Passwort zeigen/verbergen.
@@ -37,6 +38,16 @@ Oben rechts: Punkt grün = ntfy-Stream läuft, gelb = WLAN ohne Stream, rot = ke
 - Liest die öffentliche Statusseite von Uptime Kuma 1.x (`/api/status-page/<slug>` und `/api/status-page/heartbeat/<slug>`), jede Minute neu, solange die Funktion offen ist; `r` lädt sofort.
 - Pro Dienst: Status (grün läuft, rot ausgefallen, orange ausstehend, blau Wartung) und Verfügbarkeit der letzten 24 h. Enter zeigt die letzten 50 Messungen als Balken und die Antwortzeit.
 - Voraussetzung: In Uptime Kuma eine Statusseite anlegen und die gewünschten Monitore hinzufügen. **Die Seite ist öffentlich** – wer die Adresse kennt, sieht die Namen der Monitore.
+
+### System
+
+- Fragt alle 5 s `<cloud_url>/api/v1/system_stats` ab – mit derselben Anmeldung wie „Dateien“. Die Verbindung bleibt dabei offen (kein TLS-Handshake pro Abfrage) und wird beim Verlassen geschlossen.
+- **Solange „System“ offen ist, dunkelt das Display nicht ab** – am Ladekabel als dauerhafte Anzeige neben dem Server.
+- Drei Seiten, Wechsel mit `,` `/` oder Tab:
+  1. **Live:** CPU (gesamt, Takt, Balken pro Kern), Temperatur, Last, RAM, Netz- und Plattendurchsatz (aus der Differenz zweier Abfragen), Stromverbrauch, Laufzeit. Unterspannung, Drosselung oder Temperaturlimit erscheinen als rote Zeile.
+  2. **Verlauf:** CPU und Temperatur der letzten ~10 Minuten.
+  3. **Backups & Energie:** letzter Lauf je Backup (grün ok, orange überfällig, rot fehlgeschlagen), Verbrauch im Monat und Jahr.
+- Werte, die der Server nicht liefert, erscheinen als „-“. Der Server entscheidet, welche Konten die Werte sehen dürfen (sonst „nicht freigegeben“).
 
 ### Dateien
 
@@ -135,6 +146,7 @@ Ergebnis: `.pio/build/cardputer-adv/firmware.bin`. Serielle Ausgabe über USB: `
     ├── app_home.cpp      # Startmenü
     ├── app_ntfy.cpp      # Meldungen
     ├── app_status.cpp    # Uptime Kuma
+    ├── app_system.cpp    # Systemwerte (Live, Verlauf, Backups)
     ├── app_files.cpp     # Dateien
     ├── app_settings.cpp  # Einstellungen
     ├── ntfy.cpp/.h       # ntfy-Stream-Client
@@ -147,3 +159,4 @@ Ergebnis: `.pio/build/cardputer-adv/firmware.bin`. Serielle Ausgabe über USB: `
 
 - [ ] Mehr Dateiaktionen (umbenennen, verschieben, Papierkorb wiederherstellen)
 - [ ] Statusanzeige auch im Hintergrund prüfen und bei Ausfall melden
+- [ ] System: Warnschwellen (Temperatur, RAM) konfigurierbar machen

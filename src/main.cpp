@@ -4,7 +4,7 @@
 // und Einstellungen. WLAN und ntfy laufen im Hintergrund weiter, egal welche App offen ist.
 //
 // Tasten ueberall:  ; . , /  = hoch runter links rechts     Enter = oeffnen
-//                   ` (Esc) oder Del = zurueck               1-4 im Menue = direkt oeffnen
+//                   ` (Esc) oder Del = zurueck               1-5 im Menue = direkt oeffnen
 
 #include <M5Cardputer.h>
 
@@ -75,7 +75,10 @@ void loop() {
     if (pressed) {
         App* before = current;
         bool stay = current->key(k);
-        if (!stay && current == before && current != &homeApp) current = &homeApp;
+        if (!stay && current == before && current != &homeApp) {
+            if (current->leave) current->leave();
+            current = &homeApp;
+        }
         dirty = true;
     }
     if (current->tick) current->tick();

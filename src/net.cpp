@@ -293,4 +293,55 @@ Result uploadFile(const String& url, const String& bearer, const char* field, fs
     return r;
 }
 
+Result Session::getJson(const String& url, const String& bearer, JsonDocument& out) {
+    Result r = precheck(url);
+    if (r.status < 0) {
+        close();
+        return r;
+    }
+    if (!_client) {
+        _client = new WiFiClientSecure();
+        _http = new HTTPClient();
+        _client->setCACert(ROOT_CAS);
+        _client->setTimeout(TIMEOUT_MS / 1000);
+        _http->setTimeout(TIMEOUT_MS);
+        _http->setConnectTimeout(TIMEOUT_MS);
+        _http->setReuse(true);  // HTTP/1.1 keep-alive
+        _http->setUserAgent("raveneye");
+    }
+    if (!_http->begin(*_client, url)) {
+        r.status = -103;
+        r.error = "Adresse ungueltig";
+        return r;
+    }
+    if (!bearer.isEmpty()) _http->addHeader("Authorization", "Bearer " + bearer);
+    r.status = _http->GET();
+    if (r.ok()) {
+        String body = _http->getString();
+        DeserializationError e = deserializeJson(out, body);
+        if (e) {
+            r.status = -104;
+            r.error = String("Antwort unlesbar (") + e.c_str() + ")";
+        }
+    } else {
+        fillError(r, *_http);
+    }
+    _http->end();  // gibt bei setReuse(true) die Verbindung nicht auf
+    if (r.status <= 0) close();  // Verbindungsfehler: beim naechsten Mal frisch verbinden
+    return r;
+}
+
+void Session::close() {
+    if (_http) {
+        _http->end();
+        delete _http;
+        _http = nullptr;
+    }
+    if (_client) {
+        _client->stop();
+        delete _client;
+        _client = nullptr;
+    }
+}
+
 }  // namespace net

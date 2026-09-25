@@ -5,6 +5,9 @@
 #include <ArduinoJson.h>
 #include <FS.h>
 
+#include <HTTPClient.h>
+#include <WiFiClientSecure.h>
+
 #include <functional>
 
 namespace net {
@@ -34,5 +37,18 @@ Result getText(const String& url, const String& bearer, String& out, size_t maxB
 Result uploadFile(const String& url, const String& bearer, const char* field, fs::File& file,
                   const String& fileName, const String& extraName, const String& extraValue,
                   JsonDocument& out, const Progress& progress);
+
+// Dauerhafte Verbindung fuer regelmaessige Abfragen desselben Servers (spart den
+// TLS-Handshake bei jeder Abfrage). close() gibt den Speicher frei.
+class Session {
+public:
+    Result getJson(const String& url, const String& bearer, JsonDocument& out);
+    void close();
+    ~Session() { close(); }
+
+private:
+    WiFiClientSecure* _client = nullptr;
+    HTTPClient* _http = nullptr;
+};
 
 }  // namespace net

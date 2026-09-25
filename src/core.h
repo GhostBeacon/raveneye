@@ -51,4 +51,7 @@ String currentToast();
 // Ist die Meldungs-App gerade sichtbar? (dann kein Hinweis-Banner)
 extern bool ntfyVisible;
 
+// Display nicht abdunkeln (z. B. System-Monitor als Dauer-Anzeige)
+extern bool keepAwake;
+
 }  // namespace core

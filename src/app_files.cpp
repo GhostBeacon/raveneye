@@ -374,6 +374,8 @@ void filesLogout() {
     forgetLogin();
 }
 String filesUser() { return user; }
+String filesToken() { return token; }
+void filesForget() { forgetLogin(); }
 
 // ---------- App ----------
 

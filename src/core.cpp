@@ -44,8 +44,36 @@ static WifiState wifiState = WifiState::Idle;
 static uint32_t wifiNextTry = 0;
 static uint32_t wifiConnectStart = 0;
 
+// Diagnose fuer Einstellungen -> WLAN: die letzten Ereignisse, neueste zuletzt
+static std::deque<String> wifiEvents;
+static volatile int wifiDiscReason = 0;  // aus dem WLAN-Task, in wifiTick() ausgewertet
+
+// Die haeufigsten Trennungsgruende (esp_wifi_types.h), der Rest nur als Nummer
+static const char* reasonText(int r) {
+    switch (r) {
+        case 2: case 202: return "Anmeldung abgelehnt";
+        case 15: case 204: return "Handshake - Passwort falsch?";
+        case 201: return "Netz nicht gefunden";
+        case 203: return "Zuordnung abgelehnt (MAC-Filter?)";
+        case 8: return "vom Geraet getrennt";
+        case 200: return "Signal verloren";
+        default: return "";
+    }
+}
+
+static void wifiLog(const String& s) {
+    String line = String(millis() / 1000) + " s: " + s;
+    Serial.println("wlan " + line);
+    wifiEvents.push_back(line);
+    if (wifiEvents.size() > 6) wifiEvents.pop_front();
+}
+
 static void wifiTick() {
     uint32_t now = millis();
+    if (int reason = wifiDiscReason) {
+        wifiDiscReason = 0;
+        wifiLog("getrennt, Grund " + String(reason) + " " + reasonText(reason));
+    }
     switch (wifiState) {
         case WifiState::Connected:
             if (!WiFi.isConnected()) {
@@ -58,6 +86,7 @@ static void wifiTick() {
         case WifiState::Idle:
             if (WiFi.isConnected()) {
                 wifiState = WifiState::Connected;
+                wifiLog("verbunden: " + WiFi.SSID());
                 dirty = true;
             } else if ((int32_t)(now - wifiNextTry) >= 0) {
                 WiFi.scanNetworks(true);  // asynchron
@@ -68,7 +97,10 @@ static void wifiTick() {
         case WifiState::Scanning: {
             int n = WiFi.scanComplete();
             if (n == WIFI_SCAN_RUNNING) break;
+            if (n < 0) wifiLog("Scan fehlgeschlagen (" + String(n) + ")");
             int best = -1, bestRssi = -1000;
+            String seen;  // fuer die Diagnose: die ersten gefundenen Netze
+            for (int i = 0; i < n && i < 3; i++) seen += (i ? ", " : "") + WiFi.SSID(i) + " " + String(WiFi.RSSI(i));
             for (int i = 0; i < n; i++) {
                 for (size_t w = 0; w < cfg.wifis.size(); w++) {
                     if (WiFi.SSID(i) == cfg.wifis[w].ssid && WiFi.RSSI(i) > bestRssi) {
@@ -78,7 +110,9 @@ static void wifiTick() {
                 }
             }
             WiFi.scanDelete();
+            if (n >= 0 && best < 0) wifiLog("kein bekanntes Netz unter " + String(n) + ": " + seen);
             if (best >= 0) {
+                wifiLog("verbinde: " + cfg.wifis[best].ssid + " (" + String(bestRssi) + " dBm)");
                 WiFi.begin(cfg.wifis[best].ssid.c_str(), cfg.wifis[best].pass.c_str());
                 wifiState = WifiState::Connecting;
                 wifiConnectStart = now;
@@ -92,8 +126,10 @@ static void wifiTick() {
         case WifiState::Connecting:
             if (WiFi.isConnected()) {
                 wifiState = WifiState::Connected;
+                wifiLog("verbunden, IP " + WiFi.localIP().toString());
                 dirty = true;
             } else if (now - wifiConnectStart > 15000) {
+                wifiLog("Zeitueberschreitung, Status " + String((int)WiFi.status()));
                 WiFi.disconnect();
                 wifiState = WifiState::Idle;
                 wifiNextTry = now + 3000;
@@ -138,6 +174,8 @@ void begin() {
 
     WiFi.mode(WIFI_STA);
     WiFi.setAutoReconnect(false);  // wifiTick() waehlt selbst das staerkste Netz
+    WiFi.onEvent([](WiFiEvent_t, WiFiEventInfo_t info) { wifiDiscReason = info.wifi_sta_disconnected.reason; },
+                 ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
     configTzTime(TZ_BERLIN, "pool.ntp.org", "time.cloudflare.com");
     ntfy.begin(cfg.ntfyServer, cfg.ntfyTopics, onMessage);
     lastActivity = millis();
@@ -200,6 +238,12 @@ bool timeValid() { return time(nullptr) > 1700000000; }
 bool online() { return WiFi.isConnected(); }
 String wifiSsid() { return WiFi.isConnected() ? WiFi.SSID() : String(); }
 int wifiRssi() { return WiFi.isConnected() ? WiFi.RSSI() : 0; }
+
+String wifiDiagnosis() {
+    String s;
+    for (auto& e : wifiEvents) s += (s.isEmpty() ? "" : "\n") + e;
+    return s.isEmpty() ? String("noch keine Ereignisse") : s;
+}
 
 int unread() {
     int n = 0;

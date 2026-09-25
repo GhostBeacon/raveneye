@@ -97,6 +97,8 @@ static void activate(int r) {
             }
             t += "\n\nBekannte Netze (config.txt):";
             for (auto& n : core::cfg.wifis) t += "\n- " + text::sanitize(n.ssid);
+            t += "\n\nMAC: " + WiFi.macAddress();
+            t += "\n\nLetzte Ereignisse:\n" + text::sanitize(core::wifiDiagnosis());
             ui::message("WLAN", t);
             break;
         }

@@ -1,0 +1,67 @@
+name: Firmware
+
+# Baut bei jeder Aenderung. Bei einem Push auf main (oder manuellem Start) entsteht ein
+# Release mit fester Dateiname -> der M5Launcher laedt immer die neueste Version:
+#   https://github.com/GhostBeacon/raveneye/releases/latest/download/raveneye.bin
+
+on:
+  push:
+    paths-ignore:
+      - '**.md'
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  FW_VERSION: 1.0.${{ github.run_number }}
+
+jobs:
+  firmware:
+    name: Firmware bauen
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # nur fuer das Release
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.platformio
+            .pio/libdeps
+          key: pio-${{ hashFiles('platformio.ini') }}
+
+      - name: PlatformIO installieren
+        run: pip install platformio
+
+      - name: Bauen
+        run: pio run
+
+      - name: Datei benennen
+        run: |
+          mkdir -p out
+          cp .pio/build/cardputer-adv/firmware.bin out/raveneye.bin
+          sha256sum out/raveneye.bin | tee out/raveneye.bin.sha256
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: raveneye-${{ env.FW_VERSION }}
+          path: out/*
+          if-no-files-found: error
+
+      - name: Release anlegen
+        if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "v$FW_VERSION" out/raveneye.bin out/raveneye.bin.sha256 \
+            --title "RavenEye $FW_VERSION" \
+            --notes "Gebaut aus ${GITHUB_SHA::7}. Fuer den M5Stack Cardputer ADV, Installation ueber den M5Launcher." \
+            --target "$GITHUB_SHA" \
+            --latest

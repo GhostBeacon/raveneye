@@ -2,8 +2,12 @@
 # Datei auf die SD-Karte kopieren: /raveneye/config.txt
 # Echte Werte nur auf der Karte, nie ins Repo.
 
+# Mehrere WLANs moeglich: wifi_*, wifi2_*, ... wifi9_*.
+# Verbunden wird mit dem staerksten, das gerade erreichbar ist.
 wifi_ssid=<WLAN_NAME>
 wifi_pass=<WLAN_PASSWORT>
+wifi2_ssid=<WLAN2_NAME>
+wifi2_pass=<WLAN2_PASSWORT>
 
 # nur Hostname, Verbindung immer per HTTPS
 ntfy_server=ntfy.sh

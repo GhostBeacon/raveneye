@@ -4,9 +4,15 @@
 
 #include <Arduino.h>
 
+#include <vector>
+
+struct WifiNetwork {
+    String ssid;
+    String pass;
+};
+
 struct Config {
-    String wifiSsid;
-    String wifiPass;
+    std::vector<WifiNetwork> wifis;  // wifi_ssid/wifi_pass, wifi2_ssid/wifi2_pass ... wifi9_*
     String ntfyServer = "ntfy.sh";  // nur Hostname, immer HTTPS
     String ntfyTopics;              // kommagetrennt, z. B. "alarm,info"
 };

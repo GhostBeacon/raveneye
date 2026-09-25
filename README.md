@@ -28,19 +28,22 @@ Die Firmware enthält keine Zugangsdaten. Sie liest beim Start `/raveneye/config
 ```
 wifi_ssid=<WLAN_NAME>
 wifi_pass=<WLAN_PASSWORT>
+wifi2_ssid=<WLAN2_NAME>        # optional, bis wifi9_*
+wifi2_pass=<WLAN2_PASSWORT>
 ntfy_server=ntfy.sh
 ntfy_topics=<TOPIC>[,<TOPIC2>]
 ```
 
 - Pro Zeile `name=wert`. Zeilen, die mit `#` beginnen, sind Kommentare. Leerzeichen am Rand des Werts werden entfernt.
-- Das WLAN muss 2,4 GHz haben, der ESP32-S3 kann kein 5 GHz.
+- Bis zu 9 WLANs (`wifi_*`, `wifi2_*` … `wifi9_*`). Verbunden wird mit dem stärksten, das gerade erreichbar ist; bei Abbruch wird alle 10 s neu gesucht.
+- Die WLANs müssen 2,4 GHz können, der ESP32-S3 kann kein 5 GHz.
 - Topics: nur `A–Z a–z 0–9 - _`, mehrere mit Komma ohne Leerzeichen.
 
 | Fehleranzeige | Ursache |
 |---|---|
 | `Keine SD-Karte` | Karte fehlt oder ist nicht FAT32 |
 | `/raveneye/config.txt fehlt` | Ordner oder Dateiname falsch |
-| `wifi_ssid fehlt` | Zeile fehlt oder ist falsch geschrieben |
+| `wifi_ssid fehlt` | kein einziges WLAN eingetragen oder Schlüssel falsch geschrieben |
 | `ntfy_topics ungueltig` | Leerzeichen, spitze Klammern oder Sonderzeichen im Topic |
 
 ## Installieren

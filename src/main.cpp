@@ -5,6 +5,7 @@
 
 #include <M5Cardputer.h>
 #include <WiFi.h>
+#include <WiFiMulti.h>
 #include <time.h>
 
 #include <deque>
@@ -28,6 +29,7 @@ static const char* TZ_BERLIN = "CET-1CEST,M3.5.0,M10.5.0/3";
 
 static Config cfg;
 static NtfyClient ntfy;
+static WiFiMulti wifiMulti;  // nimmt das staerkste bekannte Netz
 static std::deque<NtfyMessage> messages;  // neueste vorn
 
 enum class View { List, Detail };
@@ -337,8 +339,7 @@ void setup() {
     M5Cardputer.Speaker.setVolume(96);
 
     WiFi.mode(WIFI_STA);
-    WiFi.setAutoReconnect(true);
-    WiFi.begin(cfg.wifiSsid.c_str(), cfg.wifiPass.c_str());
+    for (auto& n : cfg.wifis) wifiMulti.addAP(n.ssid.c_str(), n.pass.c_str());
     configTzTime(TZ_BERLIN, "pool.ntp.org", "time.cloudflare.com");
 
     ntfy.begin(cfg.ntfyServer, cfg.ntfyTopics, [](NtfyMessage&& m) {
@@ -391,5 +392,12 @@ void loop() {
     }
 
     if (dirty) render();
+    // Ohne Verbindung alle 10 s scannen und das staerkste bekannte Netz nehmen (blockiert kurz)
+    static uint32_t lastWifiTry = 0;
+    if (!WiFi.isConnected() && (lastWifiTry == 0 || millis() - lastWifiTry > 10000)) {
+        wifiMulti.run(8000);
+        lastWifiTry = millis();
+        dirty = true;
+    }
     delay(10);
 }

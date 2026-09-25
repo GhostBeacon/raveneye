@@ -1,4 +1,4 @@
-// RavenEye - Firmware fuer den M5Stack Cardputer ADV.
+// Rabenauge (Repo: raveneye) - Firmware fuer den M5Stack Cardputer ADV.
 //
 // Monitoring: Startmenue mit Meldungen (ntfy), Status (Uptime Kuma), System (Live-Werte
 // eines Servers) und Einstellungen. Nur lesend - das Geraet aendert nichts auf den Servern. WLAN und ntfy laufen im Hintergrund weiter, egal welche App offen ist.
@@ -38,7 +38,7 @@ static void fatal(const String& msg) {
     d.fillScreen(ui::C_BG);
     d.setFont(&ui::FONT_BOLD);
     d.setTextColor(ui::C_MAGENTA);
-    d.drawString("RAVENEYE // FEHLER", 4, 4);
+    d.drawString("RABENAUGE // FEHLER", 4, 4);
     d.drawFastHLine(0, 18, d.width(), ui::C_ERR);
     d.setFont(&ui::FONT);
     d.setTextColor(ui::C_BRIGHT);

@@ -43,6 +43,11 @@ enum class WifiState { Idle, Scanning, Connecting, Connected };
 static WifiState wifiState = WifiState::Idle;
 static uint32_t wifiNextTry = 0;
 static uint32_t wifiConnectStart = 0;
+static uint32_t wifiScanStart = 0;
+static int wifiScanFails = 0;     // Scans in Folge fehlgeschlagen
+static size_t wifiDirectNext = 0; // Rueckfall ohne Scan: welches Netz als naechstes
+static constexpr int SCAN_FAILS_BEFORE_DIRECT = 3;
+static constexpr uint16_t SCAN_MS_PER_CHANNEL = 300;  // Scan-Zeitlimit = 20 x dieser Wert
 
 // Diagnose fuer Einstellungen -> WLAN: die letzten Ereignisse, neueste zuletzt
 static std::deque<String> wifiEvents;
@@ -68,6 +73,24 @@ static void wifiLog(const String& s) {
     if (wifiEvents.size() > 6) wifiEvents.pop_front();
 }
 
+static void wifiConnect(size_t w, const String& why) {
+    wifiLog("verbinde: " + cfg.wifis[w].ssid + " (" + why + ")");
+    WiFi.begin(cfg.wifis[w].ssid.c_str(), cfg.wifis[w].pass.c_str());
+    wifiState = WifiState::Connecting;
+    wifiConnectStart = millis();
+}
+
+// Scan fehlgeschlagen: meist ist der Chip noch mit einem Verbindungsversuch beschaeftigt
+// (z. B. vom Launcher uebrig). Abbrechen, kurz warten, neu versuchen.
+static void wifiScanFailed(const String& what) {
+    wifiScanFails++;
+    wifiLog(what + " (" + String(wifiScanFails) + ". Mal)");
+    WiFi.scanDelete();
+    WiFi.disconnect();
+    wifiState = WifiState::Idle;
+    wifiNextTry = millis() + 2000;
+}
+
 static void wifiTick() {
     uint32_t now = millis();
     if (int reason = wifiDiscReason) {
@@ -89,15 +112,27 @@ static void wifiTick() {
                 wifiLog("verbunden: " + WiFi.SSID());
                 dirty = true;
             } else if ((int32_t)(now - wifiNextTry) >= 0) {
-                WiFi.scanNetworks(true);  // asynchron
-                wifiState = WifiState::Scanning;
+                if (wifiScanFails >= SCAN_FAILS_BEFORE_DIRECT) {
+                    // Rueckfall: ohne eigenen Scan der Reihe nach die eingetragenen Netze
+                    wifiScanFails = 0;
+                    wifiConnect(wifiDirectNext++ % cfg.wifis.size(), "ohne Scan");
+                } else if (WiFi.scanNetworks(true, false, false, SCAN_MS_PER_CHANNEL) == WIFI_SCAN_FAILED) {
+                    wifiScanFailed("Scan-Start abgelehnt");
+                } else {
+                    wifiState = WifiState::Scanning;
+                    wifiScanStart = now;
+                }
             }
             break;
 
         case WifiState::Scanning: {
             int n = WiFi.scanComplete();
             if (n == WIFI_SCAN_RUNNING) break;
-            if (n < 0) wifiLog("Scan fehlgeschlagen (" + String(n) + ")");
+            if (n < 0) {
+                wifiScanFailed("Scan fehlgeschlagen nach " + String((now - wifiScanStart) / 1000) + " s");
+                break;
+            }
+            wifiScanFails = 0;
             int best = -1, bestRssi = -1000;
             String seen;  // fuer die Diagnose: die ersten gefundenen Netze
             for (int i = 0; i < n && i < 3; i++) seen += (i ? ", " : "") + WiFi.SSID(i) + " " + String(WiFi.RSSI(i));
@@ -112,10 +147,7 @@ static void wifiTick() {
             WiFi.scanDelete();
             if (n >= 0 && best < 0) wifiLog("kein bekanntes Netz unter " + String(n) + ": " + seen);
             if (best >= 0) {
-                wifiLog("verbinde: " + cfg.wifis[best].ssid + " (" + String(bestRssi) + " dBm)");
-                WiFi.begin(cfg.wifis[best].ssid.c_str(), cfg.wifis[best].pass.c_str());
-                wifiState = WifiState::Connecting;
-                wifiConnectStart = now;
+                wifiConnect(best, String(bestRssi) + " dBm");
             } else {
                 wifiState = WifiState::Idle;
                 wifiNextTry = now + 10000;
@@ -172,7 +204,9 @@ void begin() {
     applyBrightness();
     M5Cardputer.Speaker.setVolume(96);
 
+    WiFi.persistent(false);  // Zugangsdaten nicht in den (mit dem Launcher geteilten) NVS schreiben
     WiFi.mode(WIFI_STA);
+    WiFi.disconnect();       // einen vom Launcher uebrigen Verbindungsversuch abbrechen
     WiFi.setAutoReconnect(false);  // wifiTick() waehlt selbst das staerkste Netz
     WiFi.onEvent([](WiFiEvent_t, WiFiEventInfo_t info) { wifiDiscReason = info.wifi_sta_disconnected.reason; },
                  ARDUINO_EVENT_WIFI_STA_DISCONNECTED);

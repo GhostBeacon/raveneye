@@ -33,6 +33,7 @@ bool timeValid();
 bool online();
 String wifiSsid();
 int wifiRssi();
+String wifiDiagnosis();  // letzte WLAN-Ereignisse (Scan, Verbinden, Trennungsgrund), mehrzeilig
 
 int unread();
 

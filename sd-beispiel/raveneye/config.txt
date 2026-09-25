@@ -13,3 +13,12 @@ wifi2_pass=<WLAN2_PASSWORT>
 ntfy_server=ntfy.sh
 # mehrere Topics mit Komma, z. B. alarm,info
 ntfy_topics=<NTFY_TOPIC>
+
+# Statusanzeige (optional): oeffentliche Statusseite von Uptime Kuma 1.x
+# Adresse ohne Pfad, dazu der Slug der Statusseite (steht in deren URL /status/<slug>)
+status_url=https://<STATUS_HOST>
+status_slug=<SLUG>
+
+# Dateien (optional): Dateimanager mit JSON-API unter <cloud_url>/api/v1
+# Anmeldung erfolgt auf dem Geraet, Passwoerter gehoeren NICHT in diese Datei.
+cloud_url=https://<CLOUD_HOST>

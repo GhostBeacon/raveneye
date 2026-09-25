@@ -15,6 +15,9 @@ struct Config {
     std::vector<WifiNetwork> wifis;  // wifi_ssid/wifi_pass, wifi2_ssid/wifi2_pass ... wifi9_*
     String ntfyServer = "ntfy.sh";  // nur Hostname, immer HTTPS
     String ntfyTopics;              // kommagetrennt, z. B. "alarm,info"
+    String statusUrl;               // Uptime Kuma, z. B. https://status.example.org (optional)
+    String statusSlug;              // Slug der Statusseite
+    String cloudUrl;                // Dateimanager mit /api/v1, z. B. https://cloud.example.org (optional)
 };
 
 // Liefert false und eine Fehlermeldung, wenn Karte/Datei fehlt oder Pflichtwerte leer sind.

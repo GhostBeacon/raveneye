@@ -66,6 +66,9 @@ bool loadConfig(Config& cfg, String& error) {
         else if (int i = wifiIndex(key, "pass")) nets[i - 1].pass = val;
         else if (key == "ntfy_server") cfg.ntfyServer = val;
         else if (key == "ntfy_topics") cfg.ntfyTopics = val;
+        else if (key == "status_url") cfg.statusUrl = val;
+        else if (key == "status_slug") cfg.statusSlug = val;
+        else if (key == "cloud_url") cfg.cloudUrl = val;
     }
     f.close();
 
@@ -75,6 +78,13 @@ bool loadConfig(Config& cfg, String& error) {
     if (cfg.wifis.empty()) {
         error = "wifi_ssid fehlt";
         return false;
+    }
+    for (String* url : {&cfg.statusUrl, &cfg.cloudUrl}) {
+        while (url->endsWith("/")) url->remove(url->length() - 1);
+        if (!url->isEmpty() && !url->startsWith("https://")) {
+            error = "URL muss https:// sein";
+            return false;
+        }
     }
     if (!validTopics(cfg.ntfyTopics)) {
         error = "ntfy_topics ungueltig";

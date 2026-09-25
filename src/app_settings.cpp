@@ -54,13 +54,13 @@ static void draw() {
     ui::drawHeader("Einstellungen");
     auto& c = ui::canvas;
     const int w = c.width(), rowH = ui::LINE_H + 1;
-    ui::drawList(R_COUNT, sel, top, ui::contentTop(), ui::contentBottom(false), rowH, [&](int i, int y, bool) {
-        c.setTextColor(TFT_WHITE);
-        c.drawString(label(i), 6, y);
+    ui::drawList(R_COUNT, sel, top, ui::contentTop(), ui::contentBottom(false), rowH, [&](int i, int y, bool s) {
+        c.setTextColor(ui::ink(s, ui::C_BRIGHT));
+        c.drawString(label(i), 7, y + 1);
         String v = value(i);
-        c.setTextColor(TFT_CYAN);
+        c.setTextColor(ui::ink(s, ui::C_CYAN));
         v = ui::fitLine(v, w / 2);
-        c.drawString(v, w - 8 - c.textWidth(v), y);
+        c.drawString(v, w - 8 - c.textWidth(v), y + 1);
     });
 }
 

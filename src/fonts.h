@@ -4,6 +4,6 @@
 #include <stdint.h>
 
 extern "C" {
-extern const uint8_t raveneye_helvR10[];
-extern const uint8_t raveneye_helvB10[];
+extern const uint8_t raveneye_spleen6x12[];
+extern const uint8_t raveneye_spleen6x12b[];
 }

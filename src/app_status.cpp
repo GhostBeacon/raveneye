@@ -36,10 +36,10 @@ static bool configured() { return !core::cfg.statusUrl.isEmpty() && !core::cfg.s
 
 static uint16_t statusColor(int s) {
     switch (s) {
-        case 0: return TFT_RED;
-        case 1: return TFT_GREEN;
-        case 2: return TFT_ORANGE;
-        case 3: return 0x5D9F;  // hellblau
+        case 0: return ui::C_ERR;
+        case 1: return ui::C_OK;
+        case 2: return ui::C_WARN;
+        case 3: return ui::C_INFO;  // Wartung
         default: return ui::C_HINT;
     }
 }
@@ -138,7 +138,7 @@ static void draw() {
     const int w = c.width();
 
     if (!configured()) {
-        c.setTextColor(TFT_LIGHTGREY);
+        c.setTextColor(ui::C_TEXT);
         int y = ui::contentTop() + 4;
         for (auto& l : ui::wrap("Nicht eingerichtet. In /raveneye/config.txt eintragen:\nstatus_url=https://...\nstatus_slug=...", w - 8)) {
             c.drawString(l, 4, y);
@@ -158,15 +158,16 @@ static void draw() {
     }
 
     const int rowH = ui::LINE_H + 2;
-    ui::drawList(monitors.size(), sel, top, ui::contentTop(), ui::contentBottom(true), rowH, [&](int i, int y, bool) {
+    ui::drawList(monitors.size(), sel, top, ui::contentTop(), ui::contentBottom(true), rowH, [&](int i, int y, bool s) {
         const auto& m = monitors[i];
-        c.fillCircle(8, y + rowH / 2, 4, statusColor(m.status));
+        if (s) c.fillRect(6, y + rowH / 2 - 4, 8, 8, ui::C_BG);  // Rahmen, damit Gruen auf Cyan sichtbar bleibt
+        c.fillRect(7, y + rowH / 2 - 3, 6, 6, statusColor(m.status));
         String right = m.uptime >= 0 ? text::fmtDecimal(m.uptime * 100, m.uptime >= 0.9995 ? 0 : 1) + " %" : "";
         int rw = c.textWidth(right);
-        c.setTextColor(m.status == 0 ? TFT_RED : TFT_WHITE);
-        c.drawString(ui::fitLine(m.name, w - 30 - rw), 18, y + 1);
-        c.setTextColor(ui::C_HINT);
-        c.drawString(right, w - 8 - rw, y + 1);
+        c.setTextColor(ui::ink(s, m.status == 0 ? ui::C_ERR : ui::C_BRIGHT));
+        c.drawString(ui::fitLine(m.name, w - 30 - rw), 18, y + 2);
+        c.setTextColor(ui::ink(s, ui::C_HINT));
+        c.drawString(right, w - 8 - rw, y + 2);
     });
 }
 
@@ -181,7 +182,7 @@ static void showDetail(const Monitor& m) {
         c.drawString(statusText(m.status), 4, y);
         c.setFont(&ui::FONT);
         y += ui::LINE_H + 2;
-        c.setTextColor(TFT_LIGHTGREY);
+        c.setTextColor(ui::C_TEXT);
         if (!m.group.isEmpty()) {
             c.drawString("Gruppe: " + m.group, 4, y);
             y += ui::LINE_H;
@@ -197,6 +198,7 @@ static void showDetail(const Monitor& m) {
             int bw = max(2, (c.width() - 8) / 50);
             int x = c.width() - 4 - n * bw;
             for (int i = 0; i < n; i++) c.fillRect(x + i * bw, y, bw - 1, 14, statusColor(m.beats[i]));
+            c.drawFastHLine(4, y + 15, c.width() - 8, ui::C_DIM);
             y += 18;
             c.setTextColor(ui::C_HINT);
             c.drawString("letzte " + String(n) + " Messungen", 4, y);

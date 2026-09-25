@@ -28,7 +28,7 @@ void forget() {
 
 void login() {
     if (core::cfg.serverUrl.isEmpty()) {
-        ui::message("Anmelden", "server_url fehlt in /raveneye/config.txt.", TFT_ORANGE);
+        ui::message("Anmelden", "server_url fehlt in /raveneye/config.txt.", ui::C_WARN);
         return;
     }
     String u = name, pass, code;
@@ -53,7 +53,7 @@ void login() {
                 net::postJson(api("/logout"), t, none, ignored);
                 ui::message("Anmelden abgebrochen",
                             "Der Server vergibt noch keine Nur-Lese-Tokens. Bitte zuerst das Server-Update einspielen.",
-                            TFT_RED);
+                            ui::C_ERR);
                 break;
             }
             tok = t;
@@ -61,14 +61,14 @@ void login() {
             break;
         }
         if (r.code == "totp_required" || r.code == "invalid_totp") {
-            if (r.code == "invalid_totp") ui::message("Anmelden", r.error, TFT_ORANGE);
+            if (r.code == "invalid_totp") ui::message("Anmelden", r.error, ui::C_WARN);
             code = "";
             if (!ui::textInput("2FA-Code", code, false, 8) || code.isEmpty()) break;
             continue;
         }
         String msg = r.error;
         if (!resp["remaining_attempts"].isNull()) msg += "\nNoch " + String((int)resp["remaining_attempts"]) + " Versuche.";
-        ui::message("Anmelden fehlgeschlagen", msg, TFT_RED);
+        ui::message("Anmelden fehlgeschlagen", msg, ui::C_ERR);
         break;
     }
     for (unsigned i = 0; i < pass.length(); i++) pass.setCharAt(i, 0);

@@ -2,6 +2,8 @@
 
 Eigene Firmware für den **M5Stack Cardputer ADV** (ESP32-S3FN8, 8 MB Flash, Tastatur-Chip TCA8418), gestartet über den [M5Launcher](https://github.com/bmorcelli/Launcher). Ein kleines Auge, das wach bleibt: reines **Monitoring** – es zeigt an und meldet, ändert aber nichts auf den Servern.
 
+Aussehen „Neon Noir“: schwarz, Cyan und Magenta, Pixelschrift. Beim Einschalten erscheint ein kurzes Startbild (~2,6 s, jede Taste überspringt es), während WLAN und ntfy schon verbinden.
+
 Ein Startmenü mit vier Funktionen. WLAN und ntfy laufen immer im Hintergrund weiter, auch wenn gerade eine andere Funktion offen ist – neue Meldungen erscheinen dann als Hinweis unten am Bildschirm.
 
 | # | Funktion | Was sie tut |
@@ -51,7 +53,7 @@ Oben rechts: Punkt grün = ntfy-Stream läuft, gelb = WLAN ohne Stream, rot = ke
 
 ### Schrift
 
-Adobe Helvetica 10 (normal/fett) mit Umlauten, ß, €, °, „…“, – und …. Emojis werden weggelassen, andere unbekannte Zeichen als `?` angezeigt.
+[Spleen](https://github.com/fcambus/spleen) 6×12 (Pixel-Monospace, BSD-Lizenz) mit Umlauten, ß, °, ergänzt um selbst gezeichnete Zeichen € „ “ ” ‚ ‘ ’ – — • …; die fette Variante ist daraus abgeleitet. Emojis werden weggelassen, andere unbekannte Zeichen als `?` angezeigt.
 
 ## Konfiguration
 
@@ -146,9 +148,10 @@ Ergebnis: `.pio/build/cardputer-adv/firmware.bin`. Serielle Ausgabe über USB: `
 ├── sd-beispiel/raveneye/config.txt  # Vorlage mit Platzhaltern
 └── src/
     ├── main.cpp          # Start, Hauptschleife, Wechsel zwischen den Funktionen
+    ├── boot.cpp/.h       # Startbild
     ├── core.cpp/.h       # Hintergrund: WLAN, ntfy, Meldungen, Einstellungen, Abdunkeln, Speicher
     ├── keys.cpp/.h       # Tastatur mit Wiederholung
-    ├── ui.cpp/.h         # Kopfzeile, Listen, Dialoge, Texteingabe
+    ├── ui.cpp/.h         # Farben, Kopfzeile, Listen, Dialoge, Texteingabe
     ├── text.cpp/.h       # UTF-8, Zeichenvorrat, Zahlen/Zeiten
     ├── net.cpp/.h        # HTTPS + JSON (einmalig oder als offene Verbindung)
     ├── auth.cpp/.h       # Anmeldung mit Nur-Lese-Token

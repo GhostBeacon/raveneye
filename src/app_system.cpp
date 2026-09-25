@@ -186,16 +186,16 @@ static void tick() {
 
 static uint16_t loadColor(float pct) {
     if (pct < 0) return ui::C_HINT;
-    if (pct >= 90) return TFT_RED;
-    if (pct >= 70) return TFT_ORANGE;
-    return TFT_GREEN;
+    if (pct >= 90) return ui::C_ERR;
+    if (pct >= 70) return ui::C_WARN;
+    return ui::C_OK;
 }
 
 static uint16_t tempColor(float t) {
     if (t < 0) return ui::C_HINT;
-    if (t >= 75) return TFT_RED;
-    if (t >= 65) return TFT_ORANGE;
-    return TFT_GREEN;
+    if (t >= 75) return ui::C_ERR;
+    if (t >= 65) return ui::C_WARN;
+    return ui::C_OK;
 }
 
 static String rate(double bps) {
@@ -205,19 +205,20 @@ static String rate(double bps) {
     return text::fmtDecimal(bps / 1048576, 1) + " MB/s";
 }
 
+// Segmentierter Balken: leere Segmente dunkel, gefuellte in der Farbe
 static void bar(int x, int y, int w, int h, float pct, uint16_t color) {
     auto& c = ui::canvas;
-    c.drawRect(x, y, w, h, ui::C_HINT);
-    if (pct > 0) c.fillRect(x + 1, y + 1, (int)((w - 2) * min(pct, 100.0f) / 100), h - 2, color);
+    int fill = pct > 0 ? (int)(w * min(pct, 100.0f) / 100) : 0;
+    for (int i = 0; i < w; i += 3) c.fillRect(x + i, y, min(2, w - i), h, i < fill ? color : ui::C_DIM);
 }
 
 // Beschriftung links, Wert rechts in einer Zeile
-static void row(int y, const String& label, const String& value, uint16_t color = TFT_WHITE) {
+static void row(int y, const String& label, const String& value, uint16_t color = ui::C_BRIGHT) {
     auto& c = ui::canvas;
     c.setTextColor(ui::C_HINT);
     c.drawString(label, 4, y);
     c.setTextColor(color);
-    c.drawString(value, 62, y);
+    c.drawString(value, 48, y);
 }
 
 static void drawLive() {
@@ -235,7 +236,7 @@ static void drawLive() {
         for (int i = 0; i < n; i++) {
             int h = L - 4;
             int fill = (int)(h * min(st.cores[i], 100.0f) / 100);
-            c.drawRect(bx + i * bw, y + 2, bw - 2, h, ui::C_HINT);
+            c.fillRect(bx + i * bw, y + 2, bw - 2, h, ui::C_DIM);
             if (fill > 0) c.fillRect(bx + i * bw + 1, y + 2 + h - fill, bw - 4, fill, loadColor(st.cores[i]));
         }
     }
@@ -272,15 +273,15 @@ static void drawLive() {
     else if (st.tempLimitNow) warn = "Temperaturlimit";
     else if (st.freqCapNow) warn = "Takt begrenzt";
     if (!warn.isEmpty()) {
-        c.fillRect(0, y, w, L, TFT_RED);
-        c.setTextColor(TFT_WHITE);
+        c.fillRect(0, y, w, L, ui::C_ERR);
+        c.setTextColor(ui::C_BG);
         c.setFont(&ui::FONT_BOLD);
         c.drawString(warn, (w - c.textWidth(warn)) / 2, y);
         c.setFont(&ui::FONT);
     } else {
         String info = "läuft " + st.uptime + "   " + String(st.procs) + " Prozesse";
         if (st.underVoltEver || st.throttledEver) info += "   (Warnung seit Start)";
-        c.setTextColor(st.underVoltEver || st.throttledEver ? TFT_ORANGE : ui::C_HINT);
+        c.setTextColor(st.underVoltEver || st.throttledEver ? ui::C_WARN : ui::C_HINT);
         c.drawString(ui::fitLine(info, w - 8), 4, y);
     }
 }
@@ -288,14 +289,14 @@ static void drawLive() {
 static void graph(int y, int h, const float* v, float lo, float hi, const String& label, uint16_t color) {
     auto& c = ui::canvas;
     const int x0 = 4, w = c.width() - 8;
-    c.drawRect(x0, y, w, h, ui::C_HINT);
+    c.drawRect(x0, y, w, h, ui::C_DIM);
     for (int i = 0; i < histLen; i++) {
         if (v[i] < 0) continue;
         int x = x0 + w - 2 - (histLen - 1 - i) * 2;
         int bh = (int)((h - 2) * constrain((v[i] - lo) / (hi - lo), 0.0f, 1.0f));
         if (bh > 0) c.fillRect(x, y + h - 1 - bh, 2, bh, color);
     }
-    c.setTextColor(TFT_WHITE);
+    c.setTextColor(ui::C_BRIGHT);
     c.drawString(label, x0 + 3, y + 1);
 }
 
@@ -304,9 +305,9 @@ static void drawHistory() {
     int y = ui::contentTop() + 1;
     int h = (ui::contentBottom(true) - y - 4) / 2;
     String cpu = "CPU " + (st.cpu >= 0 ? text::fmtDecimal(st.cpu, 0) + " %" : String("-"));
-    graph(y, h, histCpu, 0, 100, cpu, TFT_CYAN);
+    graph(y, h, histCpu, 0, 100, cpu, ui::C_CYAN);
     String t = "Temp. " + (st.temp >= 0 ? text::fmtDecimal(st.temp, 1) + " °C" : String("-")) + "   (30-85 °C)";
-    graph(y + h + 4, h, histTemp, 30, 85, t, TFT_ORANGE);
+    graph(y + h + 4, h, histTemp, 30, 85, t, ui::C_WARN);
     (void)L;
 }
 
@@ -319,13 +320,13 @@ static void drawBackups() {
         c.drawString("Kein Backup-Status geliefert", 4, y + L);
     }
     for (auto& b : st.backups) {
-        uint16_t col = !b.ok ? TFT_RED : b.stale ? TFT_ORANGE : TFT_GREEN;
-        c.fillCircle(8, y + L / 2, 4, col);
-        c.setTextColor(TFT_WHITE);
-        c.drawString(b.name, 18, y);
+        uint16_t col = !b.ok ? ui::C_ERR : b.stale ? ui::C_WARN : ui::C_OK;
+        c.fillRect(5, y + L / 2 - 3, 6, 6, col);
+        c.setTextColor(ui::C_BRIGHT);
+        c.drawString(ui::fitLine(b.name, 60), 18, y);
         String s = b.lastRun.length() >= 16 ? b.lastRun.substring(0, 6) + " " + b.lastRun.substring(11, 16) : b.lastRun;
         if (b.stale) s += " (überfällig)";
-        c.setTextColor(col == TFT_GREEN ? TFT_LIGHTGREY : col);
+        c.setTextColor(col == ui::C_OK ? ui::C_TEXT : col);
         c.drawString(s, w - 4 - c.textWidth(s), y);
         y += L;
     }
@@ -334,13 +335,13 @@ static void drawBackups() {
         c.setTextColor(ui::C_HINT);
         c.drawString("Energie Monat", 4, y);
         String e = text::fmtDecimal(st.monthKwh, 2) + " kWh  " + text::fmtDecimal(st.monthCost, 2) + " €";
-        c.setTextColor(TFT_WHITE);
+        c.setTextColor(ui::C_BRIGHT);
         c.drawString(e, w - 4 - c.textWidth(e), y);
         y += L;
         c.setTextColor(ui::C_HINT);
         c.drawString("Energie Jahr", 4, y);
         e = text::fmtDecimal(st.yearKwh, 2) + " kWh";
-        c.setTextColor(TFT_WHITE);
+        c.setTextColor(ui::C_BRIGHT);
         c.drawString(e, w - 4 - c.textWidth(e), y);
     }
 }
@@ -351,7 +352,7 @@ static void draw() {
     ui::drawHeader(TITLES[page]);
     auto& c = ui::canvas;
     if (!ready()) {
-        c.setTextColor(TFT_LIGHTGREY);
+        c.setTextColor(ui::C_TEXT);
         int y = ui::contentTop() + 6;
         String t = core::cfg.serverUrl.isEmpty() ? "Nicht eingerichtet: server_url in /raveneye/config.txt eintragen."
                                                  : "Nicht angemeldet.\n\nEnter: Anmelden (Nur-Lese-Zugang, nur Systemwerte)";
@@ -362,7 +363,7 @@ static void draw() {
         return;
     }
     if (!st.valid) {
-        c.setTextColor(lastError.isEmpty() ? ui::C_HINT : TFT_RED);
+        c.setTextColor(lastError.isEmpty() ? ui::C_HINT : ui::C_ERR);
         String t = lastError.isEmpty() ? String("Warte auf Daten ...") : "Fehler: " + lastError;
         int y = ui::contentTop() + 6;
         for (auto& l : ui::wrap(t, c.width() - 8)) {

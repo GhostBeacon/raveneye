@@ -43,24 +43,24 @@ static void draw() {
 
     const int rowH = 2 * ui::LINE_H + 2;
     ui::drawList(core::messages.size(), selectedIndex(), top, ui::contentTop(), ui::contentBottom(false), rowH,
-                 [&](int i, int y, bool) {
+                 [&](int i, int y, bool s) {
                      const auto& m = core::messages[i];
                      c.fillRect(0, y + 2, 3, rowH - 4, ui::prioColor(m.priority));
-                     if (!m.seen) c.fillCircle(w - 7, y + ui::LINE_H / 2 + 1, 3, TFT_CYAN);
+                     if (!m.seen) c.fillRect(w - 9, y + ui::LINE_H / 2 - 1, 4, 4, ui::ink(s, ui::C_MAGENTA));
 
                      String t = text::fmtTime(m.time);
                      int tw = c.textWidth(t);
-                     c.setTextColor(ui::C_HINT);
-                     c.drawString(t, w - 14 - tw, y + 1);
+                     c.setTextColor(ui::ink(s, ui::C_HINT));
+                     c.drawString(t, w - 14 - tw, y + 2);
 
                      String head = m.title.isEmpty() ? m.topic : m.title;
-                     c.setTextColor(ui::prioColor(m.priority));
+                     c.setTextColor(ui::ink(s, ui::prioColor(m.priority)));
                      c.setFont(&ui::FONT_BOLD);
-                     c.drawString(ui::fitLine(head, w - 26 - tw), 7, y + 1);
+                     c.drawString(ui::fitLine(head, w - 26 - tw), 7, y + 2);
                      c.setFont(&ui::FONT);
 
-                     c.setTextColor(TFT_LIGHTGREY);
-                     c.drawString(ui::fitLine(m.message, w - 14), 7, y + 1 + ui::LINE_H);
+                     c.setTextColor(ui::ink(s, ui::C_TEXT));
+                     c.drawString(ui::fitLine(m.message, w - 14), 7, y + 2 + ui::LINE_H);
                  });
 }
 

@@ -10,6 +10,7 @@
 
 #include "apps.h"
 #include "auth.h"
+#include "boot.h"
 #include "config.h"
 #include "core.h"
 #include "keys.h"
@@ -34,13 +35,15 @@ App* openApp(App* app) {
 
 static void fatal(const String& msg) {
     auto& d = M5Cardputer.Display;
-    d.fillScreen(TFT_BLACK);
+    d.fillScreen(ui::C_BG);
+    d.setFont(&ui::FONT_BOLD);
+    d.setTextColor(ui::C_MAGENTA);
+    d.drawString("RAVENEYE // FEHLER", 4, 4);
+    d.drawFastHLine(0, 18, d.width(), ui::C_ERR);
     d.setFont(&ui::FONT);
-    d.setTextColor(TFT_RED);
-    d.drawString("Fehler:", 4, 4);
-    d.setTextColor(TFT_WHITE);
-    d.drawString(msg, 4, 24);
-    d.setTextColor(TFT_DARKGREY);
+    d.setTextColor(ui::C_BRIGHT);
+    d.drawString(msg, 4, 26);
+    d.setTextColor(ui::C_HINT);
     d.drawString("SD: /raveneye/config.txt", 4, 60);
     while (true) delay(1000);
 }
@@ -53,12 +56,7 @@ void setup() {
     auto& d = M5Cardputer.Display;
     d.setRotation(1);
     d.setBrightness(128);
-    d.setFont(&ui::FONT);
-    d.fillScreen(TFT_BLACK);
-    d.setTextColor(TFT_CYAN);
-    d.drawString("RavenEye - starte ...", 4, 4);
-    d.setTextColor(TFT_DARKGREY);
-    d.drawString("Version " FW_VERSION, 4, 20);
+    d.fillScreen(ui::C_BG);
 
     String err;
     if (!loadConfig(core::cfg, err)) fatal(err);
@@ -66,6 +64,7 @@ void setup() {
     ui::begin();
     core::begin();
     auth::begin();
+    boot::run(FW_VERSION);
 }
 
 void loop() {

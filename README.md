@@ -12,6 +12,7 @@ Eigene Firmware für den **M5Stack Cardputer ADV** (ESP32-S3FN8, 8 MB Flash, Tas
 - Ton bei neuen Meldungen, doppelt ab Priorität 4. Farbe nach Priorität (5 rot, 4 orange, 1–2 grau).
 - Display wird nach 60 s ohne Taste gedimmt. Eine neue Meldung oder eine Taste weckt es.
 - Status oben rechts: Punkt grün = Stream läuft, gelb = WLAN ohne Stream, rot = kein WLAN. Dazu Uhrzeit und Akku.
+- Schrift: Adobe Helvetica 10 (normal/fett) mit Umlauten, ß, €, °, „…“, – und …. Emojis werden weggelassen, andere unbekannte Zeichen als `?` angezeigt.
 - Die Version steht auf dem Startbildschirm (`1.0.<Build-Nr.>`, lokal gebaut: `dev`).
 
 | Taste | Liste | Meldung |
@@ -95,13 +96,13 @@ Ergebnis: `.pio/build/cardputer-adv/firmware.bin`. Serielle Ausgabe über USB: `
     ├── main.cpp      # Anzeige, Tasten, Ablauf
     ├── ntfy.cpp/.h   # Stream-Client mit Neuverbindung
     ├── config.cpp/.h # SD-Konfiguration
-    └── certs.h       # Root-Zertifikate
+    ├── certs.h       # Root-Zertifikate
+    └── fonts.c/.h    # Schriften (u8g2-Format, Lizenz im Dateikopf)
 ```
 
 ## Offen
 
-- [ ] Umlaute auf dem Gerät prüfen (Schrift `efontCN_12`)
-- [ ] Kleinere Schrift ohne CJK-Zeichen, um Flash zu sparen (efontCN belegt ~800 KB)
+- [ ] Ton bei neuen Meldungen prüfen (kam beim ersten Test nicht)
 - [ ] Statusanzeige für eigene Dienste
 - [ ] Dateimanager-Client
 - [ ] Menü zum Wechseln zwischen den Funktionen

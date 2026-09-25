@@ -12,14 +12,20 @@
 #include <vector>
 
 #include "config.h"
+#include "fonts.h"
 #include "ntfy.h"
 
 static constexpr size_t MAX_MESSAGES = 40;
 static constexpr uint32_t DIM_AFTER_MS = 60000;
 static constexpr uint8_t BRIGHT = 128;
 static constexpr uint8_t DIM = 16;
-static constexpr int HEADER_H = 16;
-static constexpr int ROW_H = 30;  // zwei Zeilen je Meldung
+// Masse ergeben sich aus der Schrifthoehe (in setup gesetzt)
+static int LINE_H = 16;
+static int HEADER_H = 18;
+static int ROW_H = 34;  // zwei Zeilen je Meldung
+
+static const lgfx::U8g2font FONT(raveneye_helvR10);
+static const lgfx::U8g2font FONT_BOLD(raveneye_helvB10);
 
 #ifndef FW_VERSION
 #define FW_VERSION "dev"
@@ -59,6 +65,54 @@ static String fmtTime(uint32_t t) {
     if (m.tm_yday == now.tm_yday && m.tm_year == now.tm_year) strftime(buf, sizeof buf, "%H:%M", &m);
     else strftime(buf, sizeof buf, "%d.%m.", &m);
     return buf;
+}
+
+// Dekodiert ein UTF-8-Zeichen ab s[i], setzt i weiter; ungueltig -> U+FFFD
+static uint32_t nextCodepoint(const String& s, int& i) {
+    uint8_t c = s[i++];
+    int extra = c < 0x80 ? 0 : (c >> 5) == 0x6 ? 1 : (c >> 4) == 0xE ? 2 : (c >> 3) == 0x1E ? 3 : -1;
+    if (extra < 0) return 0xFFFD;
+    uint32_t cp = extra == 0 ? c : c & (0x3F >> extra);
+    for (int k = 0; k < extra; k++) {
+        if (i >= (int)s.length() || ((uint8_t)s[i] & 0xC0) != 0x80) return 0xFFFD;
+        cp = (cp << 6) | ((uint8_t)s[i++] & 0x3F);
+    }
+    return cp;
+}
+
+static void appendUtf8(String& out, uint32_t cp) {
+    char b[3];
+    int n;
+    if (cp < 0x80) { b[0] = cp; n = 1; }
+    else if (cp < 0x800) { b[0] = 0xC0 | (cp >> 6); b[1] = 0x80 | (cp & 0x3F); n = 2; }
+    else { b[0] = 0xE0 | (cp >> 12); b[1] = 0x80 | ((cp >> 6) & 0x3F); b[2] = 0x80 | (cp & 0x3F); n = 3; }
+    for (int k = 0; k < n; k++) out += b[k];
+}
+
+// Bringt Text auf den Zeichenvorrat der Schrift: ASCII, Latin-1 und
+// – — ‘ ’ ‚ “ ” „ • … €. Emojis und Steuerzeichen fallen weg, Unbekanntes wird "?".
+static String sanitize(const String& in) {
+    String out;
+    int i = 0;
+    while (i < (int)in.length()) {
+        uint32_t cp = nextCodepoint(in, i);
+        if (cp == '\n' || (cp >= 0x20 && cp < 0x7F) || (cp >= 0xA0 && cp <= 0xFF) ||
+            cp == 0x2013 || cp == 0x2014 || (cp >= 0x2018 && cp <= 0x201E) || cp == 0x2022 ||
+            cp == 0x2026 || cp == 0x20AC) {
+            appendUtf8(out, cp);
+        } else if (cp == '\t' || cp == 0x2002 || cp == 0x2003 || cp == 0x2009 || cp == 0x202F) {
+            out += ' ';
+        } else if (cp == 0x2010 || cp == 0x2011 || cp == 0x2212) {
+            out += '-';
+        } else if (cp < 0x20 || (cp >= 0x7F && cp < 0xA0) || (cp >= 0x200B && cp <= 0x200D) ||
+                   (cp >= 0xFE00 && cp <= 0xFE0F) || (cp >= 0x2600 && cp <= 0x27BF) || cp >= 0x1F000) {
+            // Steuerzeichen, Emojis und ihre Verbinder: weglassen
+        } else {
+            out += '?';
+        }
+    }
+    out.trim();
+    return out;
 }
 
 static uint16_t prioColor(uint8_t p) {
@@ -157,14 +211,16 @@ static void wake() {
 static void drawHeader() {
     canvas.fillRect(0, 0, canvas.width(), HEADER_H, 0x18E3);
     canvas.setTextColor(TFT_CYAN);
-    canvas.drawString("RavenEye", 4, 2);
+    canvas.setFont(&FONT_BOLD);
+    canvas.drawString("RavenEye", 4, 1);
+    canvas.setFont(&FONT);
 
     int x = canvas.width() - 4;
     char buf[16];
     snprintf(buf, sizeof buf, "%d%%", M5Cardputer.Power.getBatteryLevel());
     canvas.setTextColor(TFT_LIGHTGREY);
     x -= canvas.textWidth(buf);
-    canvas.drawString(buf, x, 2);
+    canvas.drawString(buf, x, 1);
 
     if (timeValid()) {
         time_t n = time(nullptr);
@@ -172,19 +228,19 @@ static void drawHeader() {
         localtime_r(&n, &m);
         strftime(buf, sizeof buf, "%H:%M", &m);
         x -= canvas.textWidth(buf) + 8;
-        canvas.drawString(buf, x, 2);
+        canvas.drawString(buf, x, 1);
     }
 
     // Verbindungspunkt: gruen = Stream laeuft, gelb = WLAN ok, rot = kein WLAN
     uint16_t dot = TFT_RED;
     if (WiFi.isConnected()) dot = ntfy.state() == NtfyClient::State::Streaming ? TFT_GREEN : TFT_YELLOW;
     x -= 10;
-    canvas.fillCircle(x, 8, 3, dot);
+    canvas.fillCircle(x, HEADER_H / 2, 3, dot);
 
     if (muted) {
         x -= canvas.textWidth("stumm") + 8;
         canvas.setTextColor(TFT_DARKGREY);
-        canvas.drawString("stumm", x, 2);
+        canvas.drawString("stumm", x, 1);
     }
 }
 
@@ -209,19 +265,21 @@ static void drawList() {
         if (sel) canvas.fillRect(0, y, w, ROW_H, 0x2945);
 
         canvas.fillRect(0, y + 2, 3, ROW_H - 4, prioColor(m.priority));
-        if (!m.seen) canvas.fillCircle(w - 6, y + 8, 3, TFT_CYAN);
+        if (!m.seen) canvas.fillCircle(w - 6, y + LINE_H / 2 + 1, 3, TFT_CYAN);
 
         String t = fmtTime(m.time);
         int tw = canvas.textWidth(t);
         canvas.setTextColor(TFT_DARKGREY);
-        canvas.drawString(t, w - 14 - tw, y + 2);
+        canvas.drawString(t, w - 14 - tw, y + 1);
 
         String head = m.title.isEmpty() ? m.topic : m.title;
         canvas.setTextColor(prioColor(m.priority));
-        canvas.drawString(fitLine(head, w - 26 - tw), 7, y + 2);
+        canvas.setFont(&FONT_BOLD);
+        canvas.drawString(fitLine(head, w - 26 - tw), 7, y + 1);
+        canvas.setFont(&FONT);
 
         canvas.setTextColor(TFT_LIGHTGREY);
-        canvas.drawString(fitLine(m.message, w - 12), 7, y + 16);
+        canvas.drawString(fitLine(m.message, w - 12), 7, y + 1 + LINE_H);
     }
 }
 
@@ -229,8 +287,8 @@ static void drawDetail() {
     if (selected >= (int)messages.size()) return;
     const auto& m = messages[selected];
     const int w = canvas.width() - 8;
-    const int lineH = 14;
-    const int maxLines = (canvas.height() - HEADER_H - 4) / lineH;
+    const int lineH = LINE_H;
+    const int maxLines = (canvas.height() - HEADER_H - 2) / lineH;
 
     std::vector<String> lines;
     String head = (m.title.isEmpty() ? m.topic : m.title) + "  " + fmtTime(m.time);
@@ -244,7 +302,7 @@ static void drawDetail() {
     for (int i = 0; i < maxLines && detailScroll + i < (int)lines.size(); i++) {
         size_t idx = detailScroll + i;
         canvas.setTextColor(idx < headLines ? prioColor(m.priority) : TFT_WHITE);
-        canvas.drawString(lines[idx], 4, HEADER_H + 4 + i * lineH);
+        canvas.drawString(lines[idx], 4, HEADER_H + 2 + i * lineH);
     }
     if (maxScroll > 0) {  // Scrollbalken
         int h = canvas.height() - HEADER_H;
@@ -267,6 +325,7 @@ static void fatal(const String& msg) {
     auto& d = M5Cardputer.Display;
     d.fillScreen(TFT_BLACK);
     d.setTextColor(TFT_RED);
+    d.setFont(&FONT);
     d.drawString("Fehler:", 4, 4);
     d.setTextColor(TFT_WHITE);
     d.drawString(msg, 4, 24);
@@ -321,7 +380,7 @@ void setup() {
     auto& d = M5Cardputer.Display;
     d.setRotation(1);
     d.setBrightness(BRIGHT);
-    d.setFont(&fonts::efontCN_12);  // enthaelt Umlaute
+    d.setFont(&FONT);
     d.fillScreen(TFT_BLACK);
     d.setTextColor(TFT_CYAN);
     d.drawString("RavenEye - starte ...", 4, 4);
@@ -333,7 +392,10 @@ void setup() {
 
     canvas.setColorDepth(16);
     canvas.createSprite(d.width(), d.height());
-    canvas.setFont(&fonts::efontCN_12);
+    canvas.setFont(&FONT);
+    LINE_H = canvas.fontHeight();
+    HEADER_H = LINE_H + 2;
+    ROW_H = 2 * LINE_H + 2;
     canvas.setTextDatum(top_left);
 
     M5Cardputer.Speaker.setVolume(96);
@@ -343,6 +405,8 @@ void setup() {
     configTzTime(TZ_BERLIN, "pool.ntp.org", "time.cloudflare.com");
 
     ntfy.begin(cfg.ntfyServer, cfg.ntfyTopics, [](NtfyMessage&& m) {
+        m.title = sanitize(m.title);
+        m.message = sanitize(m.message);
         for (auto& e : messages)
             if (e.id == m.id) return;
         // beim Start nachgeladene Meldungen (aelter als 2 min) klingeln nicht

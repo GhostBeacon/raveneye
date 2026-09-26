@@ -1,11 +1,11 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/banner/banner-dunkel.png">
-  <img alt="RABENAUGE – Monitoring für den Cardputer ADV" src="docs/banner/banner-hell.png">
+  <img alt="KRÄHENAUGE – Monitoring für den Cardputer ADV" src="docs/banner/banner-hell.png">
 </picture>
 
-# Rabenauge 🐦‍⬛
+# Krähenauge 🐦‍⬛
 
-Teil von **CORVUS** (Repo corvus, privat) – sichtbarer Name **Rabenauge**; Repo, Firmware-Datei (`raveneye.bin`) und Release-Links heißen weiter `raveneye`, damit der Launcher-Favorit unverändert funktioniert. Beim Anmelden am Server erscheint das Gerät als „Rabenauge (Cardputer)“ (bis Version 1.0.20 angemeldete Geräte weiter als „RavenEye“).
+Teil von **CORVUS** (Repo corvus, privat) – sichtbarer Name **Krähenauge**; Repo, Firmware-Datei (`raveneye.bin`) und Release-Links heißen weiter `raveneye`, damit der Launcher-Favorit unverändert funktioniert. Beim Anmelden am Server erscheint das Gerät als „Krähenauge (Cardputer)“ (bis Version 1.0.20 angemeldete Geräte weiter als „RavenEye“).
 
 Eigene Firmware für den **M5Stack Cardputer ADV** (ESP32-S3FN8, 8 MB Flash, Tastatur-Chip TCA8418), gestartet über den [M5Launcher](https://github.com/bmorcelli/Launcher). Ein kleines Auge, das wach bleibt: reines **Monitoring** – es zeigt an und meldet, ändert aber nichts auf den Servern.
 
@@ -57,7 +57,7 @@ Oben rechts: Punkt grün = ntfy-Stream läuft, gelb = WLAN ohne Stream, rot = ke
   3. **Backups & Energie:** letzter Lauf je Backup (grün ok, orange überfällig, rot fehlgeschlagen), Verbrauch im Monat und Jahr.
   4. **Speicher:** Belegung von HDD, Backup-HDD und SD-Karte (belegt / gesamt, Balken ab 80 % orange, ab 90 % rot). Eine nicht eingehängte Platte erscheint rot.
 - Werte, die der Server nicht liefert, erscheinen als „-“. Der Server entscheidet, welche Konten die Werte sehen dürfen (sonst „nicht freigegeben“).
-- **Anmeldung** beim ersten Öffnen (oder unter Einstellungen → Server) mit Benutzername, Passwort und ggf. 2FA-Code. Das Gerät fordert ein **Nur-Lese-Token** an (`scope: monitor`, Gerätename „Rabenauge“): Es darf nur Systemwerte lesen – keine Dateien, nichts löschen. Liefert der Server kein solches Token, wird es sofort wieder verworfen. Passwort und Code werden nicht gespeichert.
+- **Anmeldung** beim ersten Öffnen (oder unter Einstellungen → Server) mit Benutzername, Passwort und ggf. 2FA-Code. Das Gerät fordert ein **Nur-Lese-Token** an (`scope: monitor`, Gerätename „Krähenauge“): Es darf nur Systemwerte lesen – keine Dateien, nichts löschen. Liefert der Server kein solches Token, wird es sofort wieder verworfen. Passwort und Code werden nicht gespeichert.
 
 ### Schrift
 
@@ -105,13 +105,13 @@ Einmalig als Favorit eintragen: SD-Karte in den Rechner, `/config.conf` vorher s
 
 ```json
 {
-  "name": "Rabenauge",
+  "name": "Krähenauge",
   "fid": "",
   "link": "https://github.com/GhostBeacon/raveneye/releases/latest/download/raveneye.bin"
 }
 ```
 
-`fid` muss leer bleiben, sonst sucht der Launcher im M5Burner-Katalog statt über den Link. Danach im Launcher: **OTA → Favorite List → Rabenauge → Install**, künftige Updates genauso.
+`fid` muss leer bleiben, sonst sucht der Launcher im M5Burner-Katalog statt über den Link. Danach im Launcher: **OTA → Favorite List → Krähenauge → Install**, künftige Updates genauso.
 
 **Von der SD-Karte:** `raveneye.bin` aus einem [Release](https://github.com/GhostBeacon/raveneye/releases) (oder eine lokal gebaute `firmware.bin`) auf die Karte kopieren, im Launcher **SD** → Datei → **Install**.
 
@@ -119,14 +119,14 @@ Zum Launcher zurück: beim Einschalten eine Taste drücken, solange der Launcher
 
 ## Speicher und andere Firmwares
 
-| | Rabenauge |
+| | Krähenauge |
 |---|---|
 | Flash (App) | ~1,24 MB – der Launcher reserviert ~1,25 MB |
 | davon eigener Code | ~110 KB, der Rest ist WLAN, TLS, Anzeige- und Hardware-Bibliotheken |
 | RAM statisch | ~52 KB |
 | RAM zur Laufzeit | Bildpuffer 65 KB, WLAN ~60 KB, je TLS-Verbindung ~45 KB (ntfy immer, System nur solange offen) |
 
-Der ESP32-S3FN8 hat 8 MB Flash und keinen PSRAM. Der M5Launcher (ab 2.8) belegt selbst ~1,4 MB und kann mehrere Firmwares **gleichzeitig** im Flash halten; beim Start wählt man per Taste, welche läuft. Ob Rabenauge neben einer anderen Firmware Platz hat, zeigt der Launcher im **PMan** (Partition Manager; freier Bereich muss ≥ 1,25 MB sein). Große Firmwares mit eigener Daten-Partition können den Rest des Flash belegen – dann wird die jeweils andere beim Wechsel neu von der SD-Karte installiert.
+Der ESP32-S3FN8 hat 8 MB Flash und keinen PSRAM. Der M5Launcher (ab 2.8) belegt selbst ~1,4 MB und kann mehrere Firmwares **gleichzeitig** im Flash halten; beim Start wählt man per Taste, welche läuft. Ob Krähenauge neben einer anderen Firmware Platz hat, zeigt der Launcher im **PMan** (Partition Manager; freier Bereich muss ≥ 1,25 MB sein). Große Firmwares mit eigener Daten-Partition können den Rest des Flash belegen – dann wird die jeweils andere beim Wechsel neu von der SD-Karte installiert.
 
 Arbeitsspeicher prüfen: **Einstellungen → System** zeigt freien RAM, den kleinsten Stand seit dem Start und den größten zusammenhängenden Block (eine TLS-Verbindung braucht 16 KB am Stück). Fällt der größte Block unter 20 KB, erscheint eine Warnung. Über USB meldet die Firmware die Werte alle 30 s (`pio device monitor`).
 
@@ -144,8 +144,8 @@ Ergebnis: `.pio/build/cardputer-adv/firmware.bin`. Serielle Ausgabe über USB: `
 
 - **TLS mit Zertifikatsprüfung.** In [`src/certs.h`](src/certs.h) stehen nur ISRG Root X1 und X2 (Let's Encrypt), mit SHA-256-Fingerabdruck. Verbunden wird erst nach erfolgreichem NTP-Abgleich, denn ohne gültige Uhrzeit schlägt die Prüfung fehl.
 - **Zugangsdaten nur auf der SD-Karte**, nie in Firmware oder Repo. Wer die Karte hat, hat WLAN-Passwort und Topic.
-- **Nur lesend.** Rabenauge ändert nichts auf den Servern. Das Server-Token ist ein Nur-Lese-Token (nur Systemwerte).
-- **Token im internen Speicher (NVS), unverschlüsselt.** Der NVS-Bereich wird vom M5Launcher mit allen installierten Firmwares geteilt – jede andere Firmware auf dem Gerät kann ihn auslesen. Deshalb nur ein Nur-Lese-Token. Geht das Gerät verloren: Token auf dem Server widerrufen (Gerät „Rabenauge“). Abmelden in den Einstellungen löscht es auch dort.
+- **Nur lesend.** Krähenauge ändert nichts auf den Servern. Das Server-Token ist ein Nur-Lese-Token (nur Systemwerte).
+- **Token im internen Speicher (NVS), unverschlüsselt.** Der NVS-Bereich wird vom M5Launcher mit allen installierten Firmwares geteilt – jede andere Firmware auf dem Gerät kann ihn auslesen. Deshalb nur ein Nur-Lese-Token. Geht das Gerät verloren: Token auf dem Server widerrufen (Gerät „Krähenauge“). Abmelden in den Einstellungen löscht es auch dort.
 - Alle Verbindungen (ntfy, Status, System) laufen über HTTPS mit Prüfung gegen dieselben Stammzertifikate. Server mit Zertifikaten anderer Anbieter als Let's Encrypt werden abgelehnt.
 
 ## Aufbau

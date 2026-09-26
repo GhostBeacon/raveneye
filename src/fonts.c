@@ -1,5 +1,5 @@
 /*
-  Schriften fuer Rabenauge (RavenEye): Spleen 6x12 (Pixel-Monospace), normal + fett, im u8g2-Format.
+  Schriften fuer Krähenauge: Spleen 6x12 (Pixel-Monospace), normal + fett, im u8g2-Format.
   Quelle: spleen-6x12.bdf aus Spleen 2.2.0 (https://github.com/fcambus/spleen).
   Ergaenzt um selbst gezeichnete Glyphen: – — ‘ ’ ‚ ‛ “ ” „ • … €
   "fett" = jede Zeile mit sich selbst um 1 px nach rechts verschoben ODER-verknuepft.

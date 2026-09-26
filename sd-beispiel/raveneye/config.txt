@@ -1,4 +1,4 @@
-# RavenEye - Konfiguration
+# Krähenauge - Konfiguration
 # Datei auf die SD-Karte kopieren: /raveneye/config.txt
 # Echte Werte nur auf der Karte, nie ins Repo.
 

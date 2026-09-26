@@ -5,7 +5,7 @@
 
 # Rabenauge 🐦‍⬛
 
-Teil von **CORVUS** (siehe Repo hbcloud) – sichtbarer Name **Rabenauge**; Repo, Firmware-Datei (`raveneye.bin`) und Release-Links heißen weiter `raveneye`, damit der Launcher-Favorit unverändert funktioniert. Beim Anmelden am Server erscheint das Gerät als „Rabenauge (Cardputer)“ (bis Version 1.0.20 angemeldete Geräte weiter als „RavenEye“).
+Teil von **CORVUS** (Repo corvus, privat) – sichtbarer Name **Rabenauge**; Repo, Firmware-Datei (`raveneye.bin`) und Release-Links heißen weiter `raveneye`, damit der Launcher-Favorit unverändert funktioniert. Beim Anmelden am Server erscheint das Gerät als „Rabenauge (Cardputer)“ (bis Version 1.0.20 angemeldete Geräte weiter als „RavenEye“).
 
 Eigene Firmware für den **M5Stack Cardputer ADV** (ESP32-S3FN8, 8 MB Flash, Tastatur-Chip TCA8418), gestartet über den [M5Launcher](https://github.com/bmorcelli/Launcher). Ein kleines Auge, das wach bleibt: reines **Monitoring** – es zeigt an und meldet, ändert aber nichts auf den Servern.
 
